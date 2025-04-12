@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Student Manager</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-K8KHXE95R8"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag() {
+            dataLayer.push(arguments);
+        }
+        gtag("js", new Date());
+
+        gtag("config", "G-K8KHXE95R8");
+    </script>
+    <link rel="stylesheet" href="styles.css" />
+</head>
+<script src="scripts.js" type="module"></script>
+
+<body>
+    <!-- Top Bar -->
+
+    <div class="topbar">
+        <button id="menu_btn" class="menu-btn"
+            onclick="gtag('event', 'menu_btn_clicked', {'event_category': 'Button', 'event_label': 'Menu Button'}); toggleMenu()">
+            &#9776;
+        </button>
+        <div class="title">Student Manager</div>
+        <div id="userEmail" class="user-circle"></div>
+        <!-- This will display initials or profile picture -->
+    </div>
+
+    <!-- Sidebar Menu -->
+    <div id="sidebar" class="sidebar">
+        <a id="menu_comments_by_students" href="#"
+            onclick="gtag('event', 'comments_menu_btn_clicked', {'event_category': 'Menu Button', 'event_label': 'Comments Menu Button'}); showInterface('commentsByStudents')">Comments
+            by Students</a>
+        <a id="menu_comments_by_user" href="#"
+            onclick="gtag('event', 'comments_menu_btn_clicked', {'event_category': 'Menu Button', 'event_label': 'Comments Menu Button'}); displayCurrentUserComments()">Your
+            Comments</a>
+        <a id="menu_all_comments" href="#" style="display: none"
+            onclick="gtag('event', 'comments_menu_btn_clicked', {'event_category': 'Menu Button', 'event_label': 'Comments Menu Button'}); displayAllStudentData()">All
+            Comments</a>
+        <a id="menu_manage_students" href="#" style="display: none"
+            onclick="gtag('event', 'manage_students_menu_btn_clicked', {'event_category': 'Menu Button', 'event_label': 'Manage Students Menu Button'}); displayStudentTable()">Manage
+            Students</a>
+        <a id="menu_statistics" href="#" style="display: none"
+            onclick="gtag('event', 'statistics_menu_btn_clicked', {'event_category': 'Menu Button', 'event_label': 'Statistics Menu Button'}); loadStatistics()">Statistics</a>
+        <a id="menu_settings" href="#" style="display: none"
+            onclick="gtag('event', 'settings_menu_btn_clicked', {'event_category': 'Menu Button', 'event_label': 'Settings Menu Button'}); showInterface('adminSettings')">Settings</a>
+        <a id="menu_logout" href="#"
+            onclick="gtag('event', 'logout_menu_btn_clicked', {'event_category': 'Menu Button', 'event_label': 'Logout Menu Button'})">Logout</a>
+    </div>
+
+    <div class="main-content">
+        <div id="statistics" class="container interface" style="display: none">
+            <h2>Statistics</h2>
+
+            <div class="stat-card">
+                <h3>Total Students</h3>
+                <p id="total-students" class="stat-number">0</p>
+            </div>
+            <div class="stat-card">
+                <h3>Total Comments</h3>
+                <p id="total-comments" class="stat-number">0</p>
+            </div>
+            <div class="stat-card">
+                <h3>Comments Today</h3>
+                <p id="comments-today" class="stat-number">0</p>
+            </div>
+            <div class="stat-card">
+                <h3>Average Comments per Student</h3>
+                <p id="avg-comments" class="stat-number">0</p>
+            </div>
+
+            <!-- Chart displaying comments over the last week -->
+            <h3>Comments in the Last Month</h3>
+            <canvas id="lastWeekCommentsChart" width="400" height="200"></canvas>
+        </div>
+
+        <div id="manageStudents" class="container interface" style="display: none">
+            <h2>Manage Students</h2>
+            <p>Here you can manage student information and records.</p>
+
+            <!-- Search bar for quick student lookup -->
+            <div class="search-container">
+                <input type="text" id="searchStudent" placeholder="Search by name or ID..."
+                    oninput="searchStudentTable()" />
+            </div>
+
+            <!-- Container for table and pagination -->
+            <div class="table-container" id="tableContainer" style="overflow-x: auto"></div>
+        </div>
+
+        <div id="commentsByStudents" class="container interface">
+            <!-- Current Comments Interface -->
+            <div class="header">
+                <h2>Select a Student</h2>
+            </div>
+            <input class="studentNameInput" id="student-select" list="studentList" placeholder="Filter Students" />
+            <datalist class="studentList" id="studentList"></datalist>
+            <button id="getCommentsBtn"
+                onclick="gtag('event', 'get_comments_btn_clicked', {'event_category': 'Button', 'event_label': 'Get Comments Button'})">
+                Get Comments
+            </button>
+            <button id="addCommentButton"
+                onclick="gtag('event', 'add_comment_btn_clicked', {'event_category': 'Button', 'event_label': 'Add Comment Button'})"
+                disabled>
+                Add Comment
+            </button>
+
+            <div id="aiContentContainer" class="ai-text-container">
+                <h3 class="ai-title">AI-generated Summary:</h3>
+                <p>No AI summary available yet.</p>
+            </div>
+
+            <h2>Selected Student's Comments</h2>
+            <div id="data-container">
+                Select a student to display comments...
+            </div>
+        </div>
+
+        <div id="commentsByUser" class="container interface" style="display: none">
+            <!-- User Comments Interface -->
+            <div class="header">
+                <h2>Your Comments</h2>
+            </div>
+
+            <h3>Your Comments List:</h3>
+            <div id="userCommentsListContainer">
+                <div id="noCommentsMessage">No comments added yet.</div>
+                <!-- Dynamic comment list will appear here -->
+            </div>
+        </div>
+
+        <div id="allComments" class="container interface" style="display: none">
+            <!-- User Comments Interface -->
+            <div class="header">
+                <h2>All Comments</h2>
+            </div>
+
+            <h3>Your Comments List:</h3>
+            <div id="allCommentsListContainer">
+                <div id="noCommentsMessage">No comments added yet.</div>
+                <!-- Dynamic comment list will appear here -->
+            </div>
+        </div>
+
+        <div id="settings" class="container interface" style="display: none">
+            <h2>Settings</h2>
+            <p>Settings options has still not been added yet.</p>
+        </div>
+
+        <div id="adminSettings" class="container interface" style="display: none">
+            <h2>Admin Settings</h2>
+
+            <!-- Add Admin Email Section -->
+            <div class="admin-input-section">
+                <label for="admin-email">Add Admin Email:</label>
+                <input type="email" id="admin-email" placeholder="Enter admin email" />
+                <button id="add-admin-btn">Add Admin</button>
+            </div>
+
+            <!-- List of Admin Emails -->
+            <div class="admin-list-section">
+                <h3>Admin Email List</h3>
+                <ul id="admin-email-list">
+                    <!-- Admin email entries will be dynamically populated here -->
+                </ul>
+            </div>
+        </div>
+
+        <div id="signedOut" class="container interface" style="display: none">
+            <h2>Access Restricted</h2>
+            <p>
+                You need to sign in to manage student information and
+                records.
+            </p>
+            <button id="signInButton">Sign In</button>
+        </div>
+
+        <!-- Modal for Adding Comment -->
+        <div id="addModal" class="modal" style="display: none">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2>Add Comment</h2>
+                    <span id="closeModal" style="cursor: pointer; font-size: 20px"
+                        onclick="closeModals()">&times;</span>
+                </div>
+                <label for="commentDate">Select Date:</label>
+                <input type="date" id="commentDate" name="commentDate" style="margin-bottom: 10px" />
+                <textarea id="addCommentText" placeholder="Write your comment here"
+                    style="width: calc(100% - 20px)"></textarea>
+                <div class="modal-footer" style="display: flex; justify-content: space-between">
+                    <button class="save-button" id="saveCommentButton"
+                        onclick="gtag('event', 'save_comment_btn_clicked', {'event_category': 'Button', 'event_label': 'Add Comment Button'})">
+                        Save
+                    </button>
+                    <button class="cancel-button" id="cancelModalButton"
+                        onclick="gtag('event', 'cancel_comment_btn_clicked', {'event_category': 'Button', 'event_label': 'Cancel Comment Button'})">
+                        Cancel
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Modal for Editing Comment -->
+        <div id="editModal" class="modal" style="display: none">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2>Edit Comment</h2>
+                    <span id="closeModal1" style="cursor: pointer; font-size: 20px"
+                        onclick="closeModals()">&times;</span>
+                </div>
+                <textarea id="editCommentText"></textarea>
+                <div class="modal-footer" style="justify-content: space-between">
+                    <button id="saveEditCommentButton" class="save-button" style="margin-bottom: 2px"
+                        onclick="gtag('event', 'save_edited_comment_btn_clicked', {'event_category': 'Button', 'event_label': 'Save Edited Comment Button'})">
+                        Save
+                    </button>
+                    <button id="deleteCommentButton"
+                        onclick="gtag('event', 'delete_comment_btn_clicked', {'event_category': 'Button', 'event_label': 'Delete Comment Button'})">
+                        Delete
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- User Circle Modal -->
+        <div id="userModal" class="modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2>User Options</h2>
+                    <span id="closeModal2" style="cursor: pointer; font-size: 20px"
+                        onclick="closeModals()">&times;</span>
+                </div>
+                <div class="modal-body">
+                    <p>
+                        <strong>Email:</strong>
+                        <span id="modalUserEmail"></span>
+                    </p>
+                    <p>
+                        <strong>Name:</strong>
+                        <span id="modalUserName"></span>
+                    </p>
+                    <p>
+                        <strong>Provider ID:</strong>
+                        <span id="modalProviderId"></span>
+                    </p>
+                    <!-- <button id="viewProfileButton">View Profile</button> -->
+                    <button id="logoutButton">Sign Out</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="loading-overlay" id="loadingOverlay">
+            <div class="loading-spinner"></div>
+        </div>
+
+        <div class="notification-overlay" id="notificationOverlay">
+            Comment updated successfully!
+        </div>
+    </div>
+
+    <footer class="footer">
+        <p>&copy; 2025 Sibhi. All rights reserved.</p>
+        <p>Contact: <a>sibhi@aurobindovidhyalaya.edu.in</a></p>
+    </footer>
+
+    <!-- Main content area -->
+    <div class="main-content"></div>
+
+    <script>
+        function toggleMenu() {
+            const sidebar = document.getElementById("sidebar");
+            if (sidebar.style.width === "250px") {
+                sidebar.style.width = "0"; // Close the sidebar
+            } else {
+                sidebar.style.width = "250px"; // Open the sidebar
+            }
+        }
+
+        function showInterface(interfaceId) {
+            // Hide all interface sections
+            const sections = document.querySelectorAll(".interface");
+            sections.forEach((section) => (section.style.display = "none"));
+
+            // Display the selected interface
+            document.getElementById(interfaceId).style.display = "block";
+
+            // Close the sidebar after selection
+            toggleMenu();
+        }
+
+        // Function to search table
+        function searchStudentTable() {
+            const searchTerm = document
+                .getElementById("searchStudent")
+                .value.toLowerCase();
+            const rows = document.querySelectorAll(
+                ".student-table tbody tr"
+            );
+
+            rows.forEach((row) => {
+                const studentName = row.cells[1].textContent.toLowerCase();
+                const studentID = row.cells[0].textContent.toLowerCase();
+                row.style.display =
+                    studentName.includes(searchTerm) ||
+                        studentID.includes(searchTerm)
+                        ? ""
+                        : "none";
+            });
+        }
+
+        function closeModals() {
+            document.getElementById("editModal").style.display = "none";
+            document.getElementById("userModal").style.display = "none";
+            document.getElementById("editCommentText").value = ""; // Clear the textarea
+            document.getElementById("addModal").style.display = "none";
+            document.getElementById("addCommentText").value = ""; // Clear the textarea
+            document.getElementById("commentDate").value = ""; // Clear the date input
+            document.getElementById("sidebar").style.width = "0";
+        }
+    </script>
+</body>
+
+</html>
