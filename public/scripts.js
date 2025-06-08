@@ -54,6 +54,12 @@ let originalCommentData = {};
 // Define an array of admin emails
 const admins = [];
 
+// Set the current academic year here (update as needed)
+const CURRENT_ACADEMIC_YEAR = "2025-26";
+
+// Toggle this variable to enable/disable maintenance mode
+const MAINTENANCE_MODE = true; // Set to true to enable maintenance overlay
+
 // Initialize Firebase Authentication
 const provider = new GoogleAuthProvider();
 
@@ -368,25 +374,31 @@ window.loadStatistics = function loadStatistics() {
                 // Calculate statistics
                 for (const studentId in studentsData) {
                     totalStudents++; // Count total students
-                    const studentComments = studentsData[studentId].comments;
+                    const studentCommentsByYear = studentsData[studentId].comments;
 
-                    if (studentComments) {
-                        Object.keys(studentComments).forEach((commentKey) => {
-                            const comment = studentComments[commentKey];
-                            totalComments++; // Count total comments
+                    if (studentCommentsByYear) {
+                        // Loop through each year under comments
+                        Object.keys(studentCommentsByYear).forEach((yearKey) => {
+                            const studentComments = studentCommentsByYear[yearKey];
+                            if (studentComments) {
+                                Object.keys(studentComments).forEach((commentKey) => {
+                                    const comment = studentComments[commentKey];
+                                    totalComments++; // Count total comments
 
-                            // Check if the comment was made today
-                            if (comment.date === todayString) {
-                                todaysComments++;
-                            }
+                                    // Check if the comment was made today
+                                    if (comment.date === todayString) {
+                                        todaysComments++;
+                                    }
 
-                            // Check if the comment was made in the past week and count per day
-                            if (
-                                lastWeekCommentsData.hasOwnProperty(
-                                    comment.date
-                                )
-                            ) {
-                                lastWeekCommentsData[comment.date]++;
+                                    // Check if the comment was made in the past week and count per day
+                                    if (
+                                        lastWeekCommentsData.hasOwnProperty(
+                                            comment.date
+                                        )
+                                    ) {
+                                        lastWeekCommentsData[comment.date]++;
+                                    }
+                                });
                             }
                         });
                     }
@@ -427,7 +439,7 @@ function updateStatWithAnimation(elementId, value) {
 }
 
 async function generateContent(inputText) {
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro-002:generateContent?key=AIzaSyAlF4yESZkymzTwSkZYGh9EMpBR3kd2T58`;
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=AIzaSyAlF4yESZkymzTwSkZYGh9EMpBR3kd2T58`;
 
     var payload = {
         contents: [
@@ -573,6 +585,7 @@ function displayStudentData(currentStudentID) {
     displayAIContent("Loading");
     document.getElementById("loadingOverlay").style.display = "block";
     document.getElementById("addCommentButton").disabled = true;
+
     const dbRef = ref(database, `Students/${currentStudentID}/comments`);
     const user = auth.currentUser; // Get the currently signed-in user
     const userEmail = user ? user.email : null; // Get the user's email
@@ -583,69 +596,91 @@ function displayStudentData(currentStudentID) {
             dataContainer.innerHTML = ""; // Clear previous data
 
             if (snapshot.exists()) {
-                const comments = snapshot.val();
-                var displayedComments = [];
+                const commentsByYear = snapshot.val();
+                let displayedComments = [];
 
-                // Check if comments exist and iterate through them
-                if (
-                    comments &&
-                    typeof comments === "object" &&
-                    Object.keys(comments).length > 0
-                ) {
-                    Object.keys(comments).forEach((key) => {
-                        const comment = comments[key];
+                // Sort years in reverse chronological order
+                const sortedYears = Object.keys(commentsByYear).sort((a, b) => b.localeCompare(a));
 
-                        // Show comment only if it's from the user or if the user is an admin
-                        if (
-                            comment.from === userEmail ||
-                            admins.includes(userEmail)
-                        ) {
-                            const commentBox = document.createElement("div");
-                            commentBox.className = "comment-box";
-                            commentBox.innerHTML = `
-                            <p class="from-text">${comment.from}</p>
-                            <p class="comment-date">${comment.date} ${comment.time}</p>
-                            <p class="comment-text">${comment.comment}</p>
-                        `;
+                // Iterate over each year and fetch comments
+                sortedYears.forEach((year) => {
+                    const comments = commentsByYear[year];
 
-                            displayedComments.push({
-                                date: comment.date,
-                                time: comment.time,
-                                from: comment.from,
-                                comment: comment.comment,
-                            });
+                    if (
+                        comments &&
+                        typeof comments === "object" &&
+                        Object.keys(comments).length > 0
+                    ) {
+                        // Add a heading for the year
+                        const yearHeading = document.createElement("h3");
+                        yearHeading.className = "year-heading";
+                        yearHeading.textContent = `Year: ${year}`;
+                        dataContainer.appendChild(yearHeading);
 
-                            // Add an event listener to the comment box to open the edit modal
-                            commentBox.addEventListener("click", function () {
-                                openEditModal(currentStudentID, key);
-                            });
+                        // Sort comments within the year by date and time in reverse order
+                        const sortedComments = Object.keys(comments).sort((a, b) => {
+                            const dateA = new Date(
+                                `${comments[a].date.split("/").reverse().join("-")} ${comments[a].time}`
+                            );
+                            const dateB = new Date(
+                                `${comments[b].date.split("/").reverse().join("-")} ${comments[b].time}`
+                            );
+                            return dateB - dateA;
+                        });
 
-                            dataContainer.appendChild(commentBox);
-                        }
-                        document.getElementById(
-                            "addCommentButton"
-                        ).disabled = false;
-                    });
-                    if (displayedComments.length == 0) {
-                        dataContainer.innerHTML =
-                            "You have not added any comments for this student";
-                        document.getElementById(
-                            "addCommentButton"
-                        ).disabled = false;
+                        sortedComments.forEach((key) => {
+                            const comment = comments[key];
+
+                            // Show comment only if it's from the user or if the user is an admin
+                            if (
+                                comment.from === userEmail ||
+                                admins.includes(userEmail)
+                            ) {
+                                const commentBox = document.createElement("div");
+                                commentBox.className = "comment-box";
+                                commentBox.innerHTML = `
+                                    <p class="from-text">${comment.from}</p>
+                                    <p class="comment-date">${comment.date} ${comment.time}</p>
+                                    <p class="comment-text">${comment.comment}</p>
+                                `;
+
+                                displayedComments.push({
+                                    date: comment.date,
+                                    time: comment.time,
+                                    from: comment.from,
+                                    comment: comment.comment,
+                                    year: year,
+                                });
+
+                                // Only allow editing for current academic year
+                                if (year === CURRENT_ACADEMIC_YEAR) {
+                                    commentBox.addEventListener("click", function () {
+                                        openEditModal(currentStudentID, key, year); // Pass the correct year
+                                    });
+                                } else {
+                                    // Optionally, show a tooltip or style to indicate editing is disabled
+                                    commentBox.title = "Editing/deleting comments from previous years is not allowed.";
+                                    commentBox.style.opacity = "0.7";
+                                    commentBox.style.cursor = "not-allowed";
+                                }
+
+                                dataContainer.appendChild(commentBox);
+                            }
+                        });
                     }
-                } else {
+                });
+
+                if (displayedComments.length === 0) {
                     dataContainer.innerHTML =
-                        "No comments available for this student.";
+                        "You have not added any comments for this student.";
                 }
                 generateContent(JSON.stringify(displayedComments));
-
-                // document.getElementById('aiContentContainer').innerHTML = '<h3 class="ai-title">AI-generated Summary:</h3><ul>' + generateContent(API_KEY, JSON.stringify(displayedComments)) + '</ul>';
             } else {
                 dataContainer.innerHTML =
                     "No comments available for this student.";
-                document.getElementById("addCommentButton").disabled = false;
             }
             document.getElementById("loadingOverlay").style.display = "none";
+            document.getElementById("addCommentButton").disabled = false;
         })
         .catch((error) => {
             console.error("Error fetching data:", error);
@@ -662,9 +697,89 @@ window.displayAllStudentData = function displayAllStudentData() {
     const dbRef = ref(database, `Students`);
     const dataContainer = document.getElementById("allCommentsListContainer");
     dataContainer.innerHTML = ""; // Clear previous data
+
     let allComments = [];
+    let allEmailsSet = new Set();
     let displayedCount = 0;
-    const batchSize = 10;
+    // const batchSize = 10; // Remove batchSize, not needed
+    let currentEmailFilter = "All";
+
+    // --- Update: Render all comments at once, remove extra container ---
+    function renderComments() {
+        // Filter comments by selected email
+        let filteredComments = allComments;
+        if (currentEmailFilter !== "All") {
+            filteredComments = allComments.filter(
+                (c) => c.from === currentEmailFilter
+            );
+        }
+
+        // Remove any inner wrapper or message
+        dataContainer.innerHTML = "";
+
+        filteredComments.forEach((comment) => {
+            const commentBox = document.createElement("div");
+            commentBox.className = "comment-box";
+            commentBox.innerHTML = `
+                <p class="student-name">${comment.name}</p>
+                <p class="student-class">${comment.class} - ${comment.section}</p>
+                <p class="from-text">${comment.from}</p>
+                <p class="comment-date">${comment.date} ${comment.time}</p>
+                <p class="comment-text">${comment.comment}</p>
+            `;
+
+            commentBox.addEventListener("click", function () {
+                openEditModal(comment.studentID, comment.key, comment.year);
+            });
+
+            dataContainer.appendChild(commentBox);
+        });
+
+        displayedCount = filteredComments.length;
+
+        // If no comments, show message (no wrapper div)
+        if (filteredComments.length === 0) {
+            dataContainer.textContent = "No comments available for this user.";
+        }
+    }
+    // --- End update ---
+
+    // Helper to render the select box
+    function renderEmailFilterSelect(emails) {
+        // Remove existing filter if present
+        const existing = document.getElementById("userEmailFilterSelect");
+        if (existing) existing.remove();
+
+        const select = document.createElement("select");
+        select.id = "userEmailFilterSelect";
+        select.style.marginBottom = "12px";
+        select.style.display = "block";
+
+        // Add "All" option
+        const allOption = document.createElement("option");
+        allOption.value = "All";
+        allOption.textContent = "All Users";
+        select.appendChild(allOption);
+
+        // Add email options
+        emails.forEach(email => {
+            const option = document.createElement("option");
+            option.value = email;
+            option.textContent = email;
+            select.appendChild(option);
+        });
+
+        // Insert at the top of the container
+        dataContainer.parentNode.insertBefore(select, dataContainer);
+
+        // Listen for changes
+        select.addEventListener("change", function () {
+            currentEmailFilter = this.value;
+            displayedCount = 0;
+            dataContainer.innerHTML = "";
+            renderComments();
+        });
+    }
 
     get(dbRef)
         .then((snapshot) => {
@@ -678,92 +793,70 @@ window.displayAllStudentData = function displayAllStudentData() {
                         student.comments &&
                         typeof student.comments === "object"
                     ) {
-                        Object.keys(student.comments).forEach((key) => {
-                            const comment = student.comments[key];
-                            const studentName = `${
-                                student.details?.first_name ?? ""
-                            } ${student.details?.middle_name ?? ""} ${
-                                student.details?.last_name ?? ""
-                            }`
-                                .replace(/\s+/g, " ")
-                                .trim();
+                        // Iterate over each year under comments
+                        Object.keys(student.comments).forEach((yearKey) => {
+                            const yearComments = student.comments[yearKey];
+                            if (
+                                yearComments &&
+                                typeof yearComments === "object"
+                            ) {
+                                Object.keys(yearComments).forEach((key) => {
+                                    const comment = yearComments[key];
+                                    const studentName = `${
+                                        student.details?.first_name ?? ""
+                                    } ${student.details?.middle_name ?? ""} ${
+                                        student.details?.last_name ?? ""
+                                    }`
+                                        .replace(/\s+/g, " ")
+                                        .trim();
 
-                            allComments.push({
-                                studentID: studentID,
-                                name: studentName,
-                                class: student.details.class,
-                                section: student.details.section,
-                                date: comment.date,
-                                time: comment.time,
-                                from: comment.from,
-                                comment: comment.comment,
-                                key: key,
-                            });
+                                    allComments.push({
+                                        studentID: studentID,
+                                        name: studentName,
+                                        class: student.details.class,
+                                        section: student.details.section,
+                                        date: comment.date,
+                                        time: comment.time,
+                                        from: comment.from,
+                                        comment: comment.comment,
+                                        key: key,
+                                        year: yearKey,
+                                    });
+
+                                    // --- Add: Collect unique emails ---
+                                    if (comment.from) {
+                                        allEmailsSet.add(comment.from);
+                                    }
+                                    // --- End Add ---
+                                });
+                            }
                         });
                     }
                 });
 
+                // --- Add: Render the select box with all emails ---
+                const allEmails = Array.from(allEmailsSet).sort();
+                renderEmailFilterSelect(allEmails);
+                // --- End Add ---
+
                 allComments.sort((a, b) => {
+                    // Sort by date and time, most recent first
                     const dateA = new Date(
-                        a.date.split("/").reverse().join("-")
+                        a.date.split("/").reverse().join("-") + " " + a.time
                     );
                     const dateB = new Date(
-                        b.date.split("/").reverse().join("-")
+                        b.date.split("/").reverse().join("-") + " " + b.time
                     );
                     return dateB - dateA;
                 });
 
-                const renderComments = () => {
-                    const commentsToDisplay = allComments.slice(
-                        displayedCount,
-                        displayedCount + batchSize
-                    );
-
-                    commentsToDisplay.forEach((comment) => {
-                        const commentBox = document.createElement("div");
-                        commentBox.className = "comment-box";
-                        commentBox.innerHTML = `
-                          <p class="student-name">${comment.name}</p>
-                          <p class="student-class">${comment.class} - ${comment.section}</p>
-                          <p class="from-text">${comment.from}</p>
-                          <p class="comment-date">${comment.date} ${comment.time}</p>
-                          <p class="comment-text">${comment.comment}</p>
-                      `;
-
-                        commentBox.addEventListener("click", function () {
-                            openEditModal(comment.studentID, comment.key);
-                        });
-
-                        dataContainer.appendChild(commentBox);
-                    });
-
-                    displayedCount += commentsToDisplay.length;
-                };
-
                 renderComments();
 
-                const scrollListener = () => {
-                    const scrollTop = window.scrollY; // Distance from the top of the page
-                    const clientHeight = document.documentElement.clientHeight; // Visible height of the viewport
-                    const scrollHeight = document.documentElement.scrollHeight; // Total height of the page
+                // --- Remove scrollListener: no infinite scroll needed ---
+                // ...existing code...
+                // --- End remove ---
 
-                    if (scrollHeight - scrollTop <= clientHeight + 100) {
-                        // alert("Loading more comments...");
-                        renderComments();
-
-                        if (displayedCount >= allComments.length) {
-                            // alert("All comments loaded. Removing listener.");
-                            window.removeEventListener(
-                                "scroll",
-                                scrollListener
-                            );
-                        }
-                    }
-                };
-
-                // Attach the listener to the window object
-                window.addEventListener("scroll", scrollListener);
-
+                // If no comments at all
                 if (allComments.length === 0) {
                     dataContainer.innerHTML =
                         "No comments available for any student.";
@@ -816,49 +909,60 @@ window.displayCurrentUserComments = function displayCurrentUserComments() {
                         student.comments &&
                         typeof student.comments === "object"
                     ) {
-                        Object.keys(student.comments).forEach((key) => {
-                            const comment = student.comments[key];
-                            const studentName = `${
-                                student.details?.first_name ?? ""
-                            } ${student.details?.middle_name ?? ""} ${
-                                student.details?.last_name ?? ""
-                            }`
-                                .replace(/\s+/g, " ")
-                                .trim();
+                        // Loop through each year under comments
+                        Object.keys(student.comments).forEach((yearKey) => {
+                            const yearComments = student.comments[yearKey];
+                            if (
+                                yearComments &&
+                                typeof yearComments === "object"
+                            ) {
+                                Object.keys(yearComments).forEach((key) => {
+                                    const comment = yearComments[key];
+                                    const studentName = `${
+                                        student.details?.first_name ?? ""
+                                    } ${student.details?.middle_name ?? ""} ${
+                                        student.details?.last_name ?? ""
+                                    }`
+                                        .replace(/\s+/g, " ")
+                                        .trim();
 
-                            // Only display comments authored by the current user
-                            if (comment.from === userEmail) {
-                                const commentBox =
-                                    document.createElement("div");
-                                commentBox.className = "comment-box";
-                                commentBox.innerHTML = `
-                          <p class="student-name">${studentName}</p>
-                          <p class="student-class">${student.details.class} - ${student.details.section}</p>
-                          <p class="from-text">${comment.from}</p>
-                          <p class="comment-date">${comment.date} ${comment.time}</p>
-                          <p class="comment-text">${comment.comment}</p>
-                      `;
+                                    // Only display comments authored by the current user
+                                    if (comment.from === userEmail) {
+                                        const commentBox =
+                                            document.createElement("div");
+                                        commentBox.className = "comment-box";
+                                        commentBox.innerHTML = `
+                                            <p class="student-name">${studentName}</p>
+                                            <p class="student-class">${student.details.class} - ${student.details.section}</p>
+                                            <p class="from-text">${comment.from}</p>
+                                            <p class="comment-date">${comment.date} ${comment.time}</p>
+                                            <p class="comment-text">${comment.comment}</p>
+                                        `;
 
-                                displayedComments.push({
-                                    studentID: studentID,
-                                    name: studentName,
-                                    class: student.details.class,
-                                    section: student.details.section,
-                                    date: comment.date,
-                                    time: comment.time,
-                                    from: comment.from,
-                                    comment: comment.comment,
-                                });
+                                        displayedComments.push({
+                                            studentID: studentID,
+                                            name: studentName,
+                                            class: student.details.class,
+                                            section: student.details.section,
+                                            date: comment.date,
+                                            time: comment.time,
+                                            from: comment.from,
+                                            comment: comment.comment,
+                                            year: yearKey,
+                                            key: key,
+                                        });
 
-                                // Add an event listener to the comment box to open the edit modal
-                                commentBox.addEventListener(
-                                    "click",
-                                    function () {
-                                        openEditModal(studentID, key);
+                                        // Add an event listener to the comment box to open the edit modal
+                                        commentBox.addEventListener(
+                                            "click",
+                                            function () {
+                                                openEditModal(studentID, key, yearKey);
+                                            }
+                                        );
+
+                                        dataContainer.appendChild(commentBox);
                                     }
-                                );
-
-                                dataContainer.appendChild(commentBox);
+                                });
                             }
                         });
                     }
@@ -915,7 +1019,7 @@ function submitNewComment() {
     };
 
     // Use push() to generate a unique key for the comment under the correct path
-    const commentsRef = ref(database, `Students/${currentStudentID}/comments`);
+    const commentsRef = ref(database, `Students/${currentStudentID}/comments/2025-26`);
     const newCommentRef = push(commentsRef); // This generates a unique key for the comment
     set(newCommentRef, newComment)
         .then(() => {
@@ -966,23 +1070,27 @@ function sendGoogleChatNotification(comment, messageReason) {
 }
 
 // Function to open the edit comment modal
-function openEditModal(studentID, commentKey) {
-    // const commentID = this.querySelector(".comment-id").textContent;
+function openEditModal(studentID, commentKey, year) {
+    // Prevent editing if not current year
+    if (year !== CURRENT_ACADEMIC_YEAR) {
+        alert("You cannot edit or delete comments from previous years.");
+        return;
+    }
 
     document
         .getElementById("saveEditCommentButton")
-        .addEventListener("click", function () {
-            saveComment(studentID, commentKey);
-        });
+        .onclick = function () {
+            saveComment(studentID, commentKey, year);
+        };
     document
         .getElementById("deleteCommentButton")
-        .addEventListener("click", function () {
-            deleteComment(studentID, commentKey);
-        });
+        .onclick = function () {
+            deleteComment(studentID, commentKey, year);
+        };
 
     const commentRef = ref(
         database,
-        `Students/${studentID}/comments/${commentKey}`
+        `Students/${studentID}/comments/${year}/${commentKey}`
     );
     get(commentRef)
         .then((snapshot) => {
@@ -1001,7 +1109,14 @@ function openEditModal(studentID, commentKey) {
 }
 
 // Function to save the edited comment
-function saveComment(studentID, commentKey) {
+function saveComment(studentID, commentKey, year) {
+    // Prevent saving if not current year
+    if (year !== CURRENT_ACADEMIC_YEAR) {
+        alert("You cannot edit comments from previous years.");
+        closeModals();
+        return;
+    }
+
     document.getElementById("loadingOverlay").style.display = "block";
 
     const updatedCommentText = document
@@ -1015,7 +1130,7 @@ function saveComment(studentID, commentKey) {
 
     const commentRef = ref(
         database,
-        `Students/${studentID}/comments/${commentKey}`
+        `Students/${studentID}/comments/${year}/${commentKey}`
     );
     set(commentRef, {
         comment: updatedCommentText,
@@ -1027,6 +1142,14 @@ function saveComment(studentID, commentKey) {
             console.log("Comment updated successfully!");
             closeModals();
             displayStudentData(studentID); // Refresh the comments display
+
+            // --- Refresh "Your Comments" tab if visible ---
+            if (
+                document.getElementById("commentsByUser").style.display === "block"
+            ) {
+                window.displayCurrentUserComments();
+            }
+            // --- End refresh ---
         })
         .catch((error) => {
             console.error("Error updating comment:", error);
@@ -1037,13 +1160,20 @@ function saveComment(studentID, commentKey) {
 }
 
 // Function to delete a comment
-function deleteComment(studentID, commentKey) {
+function deleteComment(studentID, commentKey, year) {
+    // Prevent deleting if not current year
+    if (year !== CURRENT_ACADEMIC_YEAR) {
+        alert("You cannot delete comments from previous years.");
+        closeModals();
+        return;
+    }
+
     document.getElementById("loadingOverlay").style.display = "block";
 
     // Reference to the comment
     const commentRef = ref(
         database,
-        `Students/${studentID}/comments/${commentKey}`
+        `Students/${studentID}/comments/${year}/${commentKey}`
     );
 
     // Retrieve the comment data before deletion to include it in the notification
@@ -1058,6 +1188,14 @@ function deleteComment(studentID, commentKey) {
                     sendGoogleChatNotification(commentData, "Comment Deleted"); // Notify Google Chat
                     closeModals();
                     displayStudentData(studentID); // Refresh the comments display
+
+                    // --- Refresh "Your Comments" tab if visible ---
+                    if (
+                        document.getElementById("commentsByUser").style.display === "block"
+                    ) {
+                        window.displayCurrentUserComments();
+                    }
+                    // --- End refresh ---
                 });
             } else {
                 throw new Error("Comment does not exist.");
@@ -1075,6 +1213,44 @@ function deleteComment(studentID, commentKey) {
 
 // Set up event listeners when the page loads
 window.addEventListener("DOMContentLoaded", () => {
+    // --- Maintenance Overlay ---
+    if (MAINTENANCE_MODE) {
+        // Create overlay
+        const overlay = document.createElement("div");
+        overlay.id = "maintenanceOverlay";
+        overlay.innerHTML = `
+            <div class="maintenance-message">
+                <h2>Website Under Maintenance</h2>
+                <p>This website is currently undergoing maintenance.<br>
+                Please contact <a href="mailto:sibhi@aurobindovidhyalaya.edu.in">sibhi@aurobindovidhyalaya.edu.in</a> for any information.</p>
+            </div>
+        `;
+        document.body.appendChild(overlay);
+
+        // Prevent interaction with the rest of the page
+        overlay.style.display = "flex";
+        overlay.style.position = "fixed";
+        overlay.style.top = 0;
+        overlay.style.left = 0;
+        overlay.style.width = "100vw";
+        overlay.style.height = "100vh";
+        overlay.style.background = "rgba(30,30,30,0.95)";
+        overlay.style.zIndex = 20000;
+        overlay.style.justifyContent = "center";
+        overlay.style.alignItems = "center";
+        overlay.style.flexDirection = "column";
+        overlay.querySelector(".maintenance-message").style.background = "#fff";
+        overlay.querySelector(".maintenance-message").style.padding = "40px 30px";
+        overlay.querySelector(".maintenance-message").style.borderRadius = "12px";
+        overlay.querySelector(".maintenance-message").style.boxShadow = "0 4px 24px rgba(0,0,0,0.2)";
+        overlay.querySelector(".maintenance-message").style.textAlign = "center";
+        overlay.querySelector(".maintenance-message h2").style.color = "#f0873d";
+        overlay.querySelector(".maintenance-message a").style.color = "#f0873d";
+        // Stop further JS execution
+        return;
+    }
+    // --- End Maintenance Overlay ---
+
     // Add event listeners for modal actions
     document
         .getElementById("addCommentButton")

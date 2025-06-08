@@ -28,7 +28,7 @@
             onclick="gtag('event', 'menu_btn_clicked', {'event_category': 'Button', 'event_label': 'Menu Button'}); toggleMenu()">
             &#9776;
         </button>
-        <div class="title">Student Manager</div>
+        <div class="title">Student360</div>
         <div id="userEmail" class="user-circle"></div>
         <!-- This will display initials or profile picture -->
     </div>
@@ -76,7 +76,7 @@
                 <p id="avg-comments" class="stat-number">0</p>
             </div>
 
-            <!-- Chart displaying comments over the last week -->
+            <!-- Chart displaying comments on the last week -->
             <h3>Comments in the Last Month</h3>
             <canvas id="lastWeekCommentsChart" width="400" height="200"></canvas>
         </div>
@@ -92,7 +92,7 @@
             </div>
 
             <!-- Container for table and pagination -->
-            <div class="table-container" id="tableContainer" style="overflow-x: auto"></div>
+            <div class="table-container" id="tableContainer"></div>
         </div>
 
         <div id="commentsByStudents" class="container interface">
@@ -115,6 +115,9 @@
             <div id="aiContentContainer" class="ai-text-container">
                 <h3 class="ai-title">AI-generated Summary:</h3>
                 <p>No AI summary available yet.</p>
+                <span class="ai-powered-by">
+                    Powered by Gemini 2.0 Flash
+                </span>
             </div>
 
             <h2>Selected Student's Comments</h2>
@@ -141,6 +144,9 @@
             <div class="header">
                 <h2>All Comments</h2>
             </div>
+
+            <!-- Add: Placeholder for user email filter select box -->
+            <!-- The select box will be injected by JS above the list container -->
 
             <h3>Your Comments List:</h3>
             <div id="allCommentsListContainer">
@@ -187,14 +193,13 @@
             <div class="modal-content">
                 <div class="modal-header">
                     <h2>Add Comment</h2>
-                    <span id="closeModal" style="cursor: pointer; font-size: 20px"
+                    <span id="closeModal" class="close-modal"
                         onclick="closeModals()">&times;</span>
                 </div>
                 <label for="commentDate">Select Date:</label>
-                <input type="date" id="commentDate" name="commentDate" style="margin-bottom: 10px" />
-                <textarea id="addCommentText" placeholder="Write your comment here"
-                    style="width: calc(100% - 20px)"></textarea>
-                <div class="modal-footer" style="display: flex; justify-content: space-between">
+                <input type="date" id="commentDate" name="commentDate" />
+                <textarea id="addCommentText" placeholder="Write your comment here"></textarea>
+                <div class="modal-footer">
                     <button class="save-button" id="saveCommentButton"
                         onclick="gtag('event', 'save_comment_btn_clicked', {'event_category': 'Button', 'event_label': 'Add Comment Button'})">
                         Save
@@ -212,12 +217,12 @@
             <div class="modal-content">
                 <div class="modal-header">
                     <h2>Edit Comment</h2>
-                    <span id="closeModal1" style="cursor: pointer; font-size: 20px"
+                    <span id="closeModal1" class="close-modal"
                         onclick="closeModals()">&times;</span>
                 </div>
                 <textarea id="editCommentText"></textarea>
-                <div class="modal-footer" style="justify-content: space-between">
-                    <button id="saveEditCommentButton" class="save-button" style="margin-bottom: 2px"
+                <div class="modal-footer">
+                    <button id="saveEditCommentButton" class="save-button"
                         onclick="gtag('event', 'save_edited_comment_btn_clicked', {'event_category': 'Button', 'event_label': 'Save Edited Comment Button'})">
                         Save
                     </button>
@@ -257,7 +262,7 @@
         </div>
 
         <div class="loading-overlay" id="loadingOverlay">
-            <div class="loading-spinner"></div>
+            <img src="images/auro.png" alt="Loading..." class="loading-image" />
         </div>
 
         <div class="notification-overlay" id="notificationOverlay">
