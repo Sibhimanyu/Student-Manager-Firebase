@@ -36,11 +36,7 @@
     <!-- Sidebar Menu -->
     <div id="sidebar" class="sidebar">
         <a id="menu_comments_by_students" href="#"
-            onclick="gtag('event', 'comments_menu_btn_clicked', {'event_category': 'Menu Button', 'event_label': 'Comments Menu Button'}); showInterface('commentsByStudents')">Comments
-            by Students</a>
-        <a id="menu_comments_by_user" href="#"
-            onclick="gtag('event', 'comments_menu_btn_clicked', {'event_category': 'Menu Button', 'event_label': 'Comments Menu Button'}); displayCurrentUserComments()">Your
-            Comments</a>
+            onclick="gtag('event', 'comments_menu_btn_clicked', {'event_category': 'Menu Button', 'event_label': 'Comments Menu Button'}); showInterface('studentDirectory')">Student Directory</a>
         <a id="menu_all_comments" href="#" style="display: none"
             onclick="gtag('event', 'comments_menu_btn_clicked', {'event_category': 'Menu Button', 'event_label': 'Comments Menu Button'}); displayAllStudentData()">All
             Comments</a>
@@ -95,7 +91,7 @@
             <div class="table-container" id="tableContainer"></div>
         </div>
 
-        <div id="commentsByStudents" class="container interface">
+        <div id="studentDirectory" class="container interface">
             <!-- Current Comments Interface -->
             <div class="header">
                 <h2>Select a Student</h2>
@@ -123,19 +119,6 @@
             <h2>Selected Student's Comments</h2>
             <div id="data-container">
                 Select a student to display comments...
-            </div>
-        </div>
-
-        <div id="commentsByUser" class="container interface" style="display: none">
-            <!-- User Comments Interface -->
-            <div class="header">
-                <h2>Your Comments</h2>
-            </div>
-
-            <h3>Your Comments List:</h3>
-            <div id="userCommentsListContainer">
-                <div id="noCommentsMessage">No comments added yet.</div>
-                <!-- Dynamic comment list will appear here -->
             </div>
         </div>
 
