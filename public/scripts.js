@@ -55,7 +55,7 @@ const managers = []; // Add managers array
 const CURRENT_ACADEMIC_YEAR = "2025-26";
 
 // Toggle this variable to enable/disable maintenance mode
-const MAINTENANCE_MODE = false; // Set to true to enable maintenance overlay
+const MAINTENANCE_MODE = true; // Set to true to enable maintenance overlay
 
 // Initialize Firebase Authentication
 const provider = new GoogleAuthProvider();
@@ -236,17 +236,18 @@ onAuthStateChanged(auth, async (user) => {
         document.getElementById("menu_manage_students").style.display = "block";
         document.getElementById("menu_statistics").style.display = "block";
         document.getElementById("menu_all_comments").style.display = "block";
-        if (
-            userEmail.includes("sibhi@aurobindovidhyalaya.edu.in") ||
-            userEmail.includes("vineethag@aurobindovidhyalaya.edu.in")
-        ) {
-            document.getElementById("menu_settings").style.display = "block";
-        }
+        // Remove settings tab logic
+        // if (
+        //     userEmail.includes("sibhi@aurobindovidhyalaya.edu.in") ||
+        //     userEmail.includes("vineethag@aurobindovidhyalaya.edu.in")
+        // ) {
+        //     document.getElementById("menu_settings").style.display = "block";
+        // }
     } else {
         document.getElementById("menu_manage_students").style.display = "none";
         document.getElementById("menu_all_comments").style.display = "none";
         document.getElementById("menu_statistics").style.display = "none";
-        document.getElementById("menu_settings").style.display = "none";
+        // document.getElementById("menu_settings").style.display = "none";
     }
 });
 
@@ -1412,58 +1413,58 @@ window.addEventListener("DOMContentLoaded", () => {
     document.getElementById("studentDirectory").style.display = "block"; // Show the modal
 
     // Initialize Firebase (Assumes Firebase is already initialized in your project)
-    const adminEmailsRef = ref(database, "AdminEmails");
+    // const adminEmailsRef = ref(database, "AdminEmails");
     // const dbRef = ref(database, "Students");
 
     // Function to add a new admin email
-    document.getElementById("add-admin-btn").addEventListener("click", () => {
-        const email = document.getElementById("admin-email").value.trim();
-        if (email.endsWith("@aurobindovidhyalaya.edu.in")) {
-            push(adminEmailsRef, email)
-                .then(() => {
-                    document.getElementById("admin-email").value = ""; // Clear input after adding
-                })
-                .catch((error) => {
-                    console.error("Error adding email:", error);
-                });
-        } else {
-            alert(
-                "Please enter a valid email ending with @aurobindovidhyalaya.edu.in"
-            );
-        }
-    });
+    // document.getElementById("add-admin-btn").addEventListener("click", () => {
+    //     const email = document.getElementById("admin-email").value.trim();
+    //     if (email.endsWith("@aurobindovidhyalaya.edu.in")) {
+    //         push(adminEmailsRef, email)
+    //             .then(() => {
+    //                 document.getElementById("admin-email").value = ""; // Clear input after adding
+    //             })
+    //             .catch((error) => {
+    //                 console.error("Error adding email:", error);
+    //             });
+    //     } else {
+    //         alert(
+    //             "Please enter a valid email ending with @aurobindovidhyalaya.edu.in"
+    //         );
+    //     }
+    // });
 
     // Function to remove an admin email
-    function removeAdminEmail(key) {
-        const emailRef = ref(database, `AdminEmails/${key}`);
-        remove(emailRef).catch((error) => {
-            console.error("Error removing email:", error);
-        });
-    }
+    // function removeAdminEmail(key) {
+    //     const emailRef = ref(database, `AdminEmails/${key}`);
+    //     remove(emailRef).catch((error) => {
+    //         console.error("Error removing email:", error);
+    //     });
+    // }
 
     // Real-time listener to populate the admin email list
-    onValue(adminEmailsRef, (snapshot) => {
-        const adminEmailList = document.getElementById("admin-email-list");
-        adminEmailList.innerHTML = ""; // Clear the list
+    // onValue(adminEmailsRef, (snapshot) => {
+    //     const adminEmailList = document.getElementById("admin-email-list");
+    //     adminEmailList.innerHTML = ""; // Clear the list
 
-        snapshot.forEach((childSnapshot) => {
-            const key = childSnapshot.key;
-            const email = childSnapshot.val();
+    //     snapshot.forEach((childSnapshot) => {
+    //         const key = childSnapshot.key;
+    //         const email = childSnapshot.val();
 
-            const listItem = document.createElement("li");
-            listItem.classList.add("admin-list-item");
+    //         const listItem = document.createElement("li");
+    //         listItem.classList.add("admin-list-item");
 
-            const emailText = document.createElement("span");
-            emailText.textContent = email;
-            listItem.appendChild(emailText);
+    //         const emailText = document.createElement("span");
+    //         emailText.textContent = email;
+    //         listItem.appendChild(emailText);
 
-            const removeBtn = document.createElement("button");
-            removeBtn.classList.add("remove-btn");
-            removeBtn.textContent = "Remove";
-            removeBtn.addEventListener("click", () => removeAdminEmail(key));
+    //         const removeBtn = document.createElement("button");
+    //         removeBtn.classList.add("remove-btn");
+    //         removeBtn.textContent = "Remove";
+    //         removeBtn.addEventListener("click", () => removeAdminEmail(key));
 
-            listItem.appendChild(removeBtn);
-            adminEmailList.appendChild(listItem);
-        });
-    });
+    //         listItem.appendChild(removeBtn);
+    //         adminEmailList.appendChild(listItem);
+    //     });
+    // });
 });

@@ -45,8 +45,6 @@
             Students</a>
         <a id="menu_statistics" href="#" style="display: none"
             onclick="gtag('event', 'statistics_menu_btn_clicked', {'event_category': 'Menu Button', 'event_label': 'Statistics Menu Button'}); loadStatistics()">Statistics</a>
-        <a id="menu_settings" href="#" style="display: none"
-            onclick="gtag('event', 'settings_menu_btn_clicked', {'event_category': 'Menu Button', 'event_label': 'Settings Menu Button'}); showInterface('adminSettings')">Settings</a>
         <a id="menu_logout" href="#"
             onclick="gtag('event', 'logout_menu_btn_clicked', {'event_category': 'Menu Button', 'event_label': 'Logout Menu Button'})">Logout</a>
     </div>
@@ -135,30 +133,6 @@
             <div id="allCommentsListContainer">
                 <div id="noCommentsMessage">No comments added yet.</div>
                 <!-- Dynamic comment list will appear here -->
-            </div>
-        </div>
-
-        <div id="settings" class="container interface" style="display: none">
-            <h2>Settings</h2>
-            <p>Settings options has still not been added yet.</p>
-        </div>
-
-        <div id="adminSettings" class="container interface" style="display: none">
-            <h2>Admin Settings</h2>
-
-            <!-- Add Admin Email Section -->
-            <div class="admin-input-section">
-                <label for="admin-email">Add Admin Email:</label>
-                <input type="email" id="admin-email" placeholder="Enter admin email" />
-                <button id="add-admin-btn">Add Admin</button>
-            </div>
-
-            <!-- List of Admin Emails -->
-            <div class="admin-list-section">
-                <h3>Admin Email List</h3>
-                <ul id="admin-email-list">
-                    <!-- Admin email entries will be dynamically populated here -->
-                </ul>
             </div>
         </div>
 
