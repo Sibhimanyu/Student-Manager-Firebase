@@ -1,7 +1,6 @@
 export function closeAllDiv() {
-    document.getElementById("commentsByStudents").style.display = "none";
+    document.getElementById("studentDirectory").style.display = "none";
     document.getElementById("manageStudents").style.display = "none";
-    document.getElementById("commentsByUser").style.display = "none";
     document.getElementById("adminSettings").style.display = "none";
     document.getElementById("allComments").style.display = "none";
     document.getElementById("statistics").style.display = "none";
@@ -11,7 +10,11 @@ export function closeAllDiv() {
 
 // Function to close the edit modal
 export function closeModals() {
-    document.getElementById("commentActionModal").style.display = "none";
+    try {
+        document.getElementById("commentActionModal").style.display = "none";
+    } catch (error) {
+        console.error("action model not open");
+    }
     document.getElementById("editModal").style.display = "none";
     document.getElementById("userModal").style.display = "none";
     document.getElementById("editCommentText").value = ""; // Clear the textarea
@@ -38,11 +41,13 @@ export function displayAIContent(ai) {
         })
         .join("");
 
-    // Update AI content container
+    // Always show the "Powered by" text
     aiContainer.innerHTML =
-        '<h3 class="ai-title">AI-generated Summary:</h3><ul>' +
-        formattedAIText +
-        "</ul>";
+        '<h3 class="ai-title">AI-generated Summary:</h3>' +
+        (ai === "Loading"
+            ? '<p>Loading...</p>'
+            : "<ul>" + formattedAIText + "</ul>") +
+        '<span class="ai-powered-by">Powered by Google Gemini 2.0 Flash</span>';
 }
 
 export function showNotificationOverlay(text) {

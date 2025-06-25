@@ -794,7 +794,12 @@ function loadNotesForComment(studentID, year, commentKey, notesContainer) {
                 const notes = snapshot.val();
                 const noteKeys = Object.keys(notes);
                 if (noteKeys.length > 0) {
-                    let notesHtml = `<strong>Notes:</strong><div class="notes-list">`;
+                    // Improved notes presentation
+                    let notesHtml = `
+                        <div class="notes-block">
+                            <div class="notes-title"><span>Notes</span></div>
+                            <div class="notes-list">
+                    `;
                     noteKeys
                         .sort((a, b) => {
                             const tA = notes[a].timestamp || "";
@@ -803,12 +808,20 @@ function loadNotesForComment(studentID, year, commentKey, notesContainer) {
                         })
                         .forEach((noteKey) => {
                             const note = notes[noteKey];
-                            notesHtml += `<div class="note-item" style="margin-bottom:4px;">
-                                <span style="font-size:13px;color:#555;"><b>${note.by || "Unknown"}:</b> ${note.text}</span>
-                                <span style="font-size:11px;color:#999;margin-left:8px;">${note.timestamp ? new Date(note.timestamp).toLocaleString() : ""}</span>
-                            </div>`;
+                            notesHtml += `
+                                <div class="note-item">
+                                    <div class="note-header">
+                                        <span class="note-author">${note.by || "Unknown"}</span>
+                                        <span class="note-date">${note.timestamp ? new Date(note.timestamp).toLocaleString() : ""}</span>
+                                    </div>
+                                    <div class="note-text">${note.text}</div>
+                                </div>
+                            `;
                         });
-                    notesHtml += `</div>`;
+                    notesHtml += `
+                            </div>
+                        </div>
+                    `;
                     notesContainer.innerHTML = notesHtml;
                 }
                 // If no notes, leave notesContainer empty (no "Notes:" label)
@@ -1178,31 +1191,40 @@ function saveComment(studentID, commentKey, year) {
         database,
         `Students/${studentID}/comments/${year}/${commentKey}`
     );
-    set(commentRef, {
-        comment: updatedCommentText,
-        date: originalCommentData.date, // Retain original date
-        time: originalCommentData.time, // Retain original time
-        from: originalCommentData.from, // Retain original email
-    })
+
+    // Fetch the existing comment to preserve notes
+    get(commentRef)
+        .then((snapshot) => {
+            if (snapshot.exists()) {
+                const existingData = snapshot.val();
+                // Preserve notes if present
+                const updatedData = {
+                    comment: updatedCommentText,
+                    date: originalCommentData.date, // Retain original date
+                    time: originalCommentData.time, // Retain original time
+                    from: originalCommentData.from, // Retain original email
+                };
+                if (existingData.notes) {
+                    updatedData.notes = existingData.notes;
+                }
+                return set(commentRef, updatedData);
+            } else {
+                throw new Error("No comment data available for editing.");
+            }
+        })
         .then(() => {
             console.log("Comment updated successfully!");
             closeModals();
             displayStudentData(studentID); // Refresh the comments display
-
-            // --- Remove refresh "Your Comments" tab if visible ---
-            // if (
-            //     document.getElementById("commentsByUser").style.display === "block"
-            // ) {
-            //     window.displayCurrentUserComments();
-            // }
-            // --- End remove ---
         })
         .catch((error) => {
             console.error("Error updating comment:", error);
             alert("Failed to update comment. Please try again.");
+        })
+        .finally(() => {
+            document.getElementById("loadingOverlay").style.display = "none";
+            showNotificationOverlay("Comment Updated Successfully");
         });
-    document.getElementById("loadingOverlay").style.display = "none";
-    showNotificationOverlay("Comment Updated Successfully");
 }
 
 // Function to delete a comment
