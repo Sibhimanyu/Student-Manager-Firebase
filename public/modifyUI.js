@@ -11,6 +11,7 @@ export function closeAllDiv() {
 
 // Function to close the edit modal
 export function closeModals() {
+    document.getElementById("commentActionModal").style.display = "none";
     document.getElementById("editModal").style.display = "none";
     document.getElementById("userModal").style.display = "none";
     document.getElementById("editCommentText").value = ""; // Clear the textarea

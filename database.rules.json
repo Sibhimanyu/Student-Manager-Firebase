@@ -1,0 +1,21 @@
+{
+  "rules": {
+    "Students": {
+      ".read": "auth != null && auth.token.email.matches(/@aurobindovidhyalaya\\.edu\\.in$/)",
+      ".write": "auth != null && auth.token.email.matches(/@aurobindovidhyalaya\\.edu\\.in$/)",
+      ".indexOn": "comments/date"
+    },
+    "AdminEmails": {
+      ".read": "auth != null && auth.token.email.matches(/@aurobindovidhyalaya\\.edu\\.in$/)",
+      ".write": "auth != null && (auth.token.email === 'sibhi@aurobindovidhyalaya.edu.in' || auth.token.email === 'vineetha@aurobindovidhyalaya.edu.in')",
+      "admins": {
+        ".read": "auth != null && auth.token.email.matches(/@aurobindovidhyalaya\\.edu\\.in$/)",
+        ".write": "auth != null && (auth.token.email === 'sibhi@aurobindovidhyalaya.edu.in' || auth.token.email === 'vineetha@aurobindovidhyalaya.edu.in')"
+      },
+      "managers": {
+        ".read": "auth != null && auth.token.email.matches(/@aurobindovidhyalaya\\.edu\\.in$/)",
+        ".write": "auth != null && (auth.token.email === 'sibhi@aurobindovidhyalaya.edu.in' || auth.token.email === 'vineetha@aurobindovidhyalaya.edu.in' || auth.token.email === 'gv@aurobindovidhyalaya.edu.in')"
+      }
+    }
+  }
+}

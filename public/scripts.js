@@ -8,10 +8,7 @@ import {
     push,
     onValue,
     remove,
-    orderByKey,
-    query,
-    startAfter,
-    limitToFirst,
+    update, // Add update import if not present
 } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-database.js";
 import {
     getAuth,
@@ -53,37 +50,49 @@ let currentStudentID = "";
 let originalCommentData = {};
 // Define an array of admin emails
 const admins = [];
+const managers = []; // Add managers array
 
 // Set the current academic year here (update as needed)
 const CURRENT_ACADEMIC_YEAR = "2025-26";
 
 // Toggle this variable to enable/disable maintenance mode
-const MAINTENANCE_MODE = true; // Set to true to enable maintenance overlay
+const MAINTENANCE_MODE = false; // Set to true to enable maintenance overlay
 
 // Initialize Firebase Authentication
 const provider = new GoogleAuthProvider();
 
 async function populateAdminsArray() {
-    const adminEmailsRef = ref(database, "AdminEmails");
+    // Change path to AdminEmails/admins and AdminEmails/managers
+    const adminEmailsRef = ref(database, "AdminEmails/admins");
+    const managerEmailsRef = ref(database, "AdminEmails/managers");
 
     try {
-        // Wait for the data to be retrieved from the database
-        const snapshot = await get(adminEmailsRef);
-
-        if (snapshot.exists()) {
-            admins.length = 0; // Reset the array to avoid duplication
-            snapshot.forEach((childSnapshot) => {
+        // Admins
+        const adminSnap = await get(adminEmailsRef);
+        admins.length = 0;
+        if (adminSnap.exists()) {
+            adminSnap.forEach((childSnapshot) => {
                 const email = childSnapshot.val();
                 if (email && !admins.includes(email)) {
-                    // Check for valid email and avoid duplicates
-                    admins.push(email); // Add email to the array
-                    console.log(`Added admin: ${email}`);
+                    admins.push(email);
                 }
             });
-            console.log("Admins array updated:", admins); // Log the updated array for debugging
-        } else {
-            console.log("No admin emails found.");
         }
+
+        // Managers
+        const managerSnap = await get(managerEmailsRef);
+        managers.length = 0;
+        if (managerSnap.exists()) {
+            managerSnap.forEach((childSnapshot) => {
+                const email = childSnapshot.val();
+                if (email && !managers.includes(email)) {
+                    managers.push(email);
+                }
+            });
+        }
+
+        console.log("Admins array updated:", admins);
+        console.log("Managers array updated:", managers);
     } catch (error) {
         console.error("Error getting data:", error);
     }
@@ -631,10 +640,11 @@ function displayStudentData(currentStudentID) {
                         sortedComments.forEach((key) => {
                             const comment = comments[key];
 
-                            // Show comment only if it's from the user or if the user is an admin
+                            // Show comment if it's from the user, or user is admin/manager
                             if (
                                 comment.from === userEmail ||
-                                admins.includes(userEmail)
+                                admins.includes(userEmail) ||
+                                managers.includes(userEmail)
                             ) {
                                 const commentBox = document.createElement("div");
                                 commentBox.className = "comment-box";
@@ -652,14 +662,47 @@ function displayStudentData(currentStudentID) {
                                     year: year,
                                 });
 
-                                // Only allow editing for current academic year
-                                if (year === CURRENT_ACADEMIC_YEAR) {
-                                    commentBox.addEventListener("click", function () {
-                                        openEditModal(currentStudentID, key, year); // Pass the correct year
-                                    });
-                                } else {
-                                    // Optionally, show a tooltip or style to indicate editing is disabled
-                                    commentBox.title = "Editing/deleting comments from previous years is not allowed.";
+                                // --- Notes Section ---
+                                const notesContainer = document.createElement("div");
+                                notesContainer.className = "notes-container";
+                                notesContainer.style.marginTop = "10px";
+                                commentBox.appendChild(notesContainer);
+
+                                // Load notes for this comment
+                                loadNotesForComment(currentStudentID, year, key, notesContainer);
+
+                                // --- End Notes Section ---
+
+                                // Determine edit permission
+                                let canEdit = false;
+                                if (year === CURRENT_ACADEMIC_YEAR && admins.includes(userEmail)) {
+                                    canEdit = true;
+                                }
+
+                                // Click handler for comment box
+                                commentBox.onclick = function (e) {
+                                    e.stopPropagation();
+                                    // Only allow actions for current academic year
+                                    if (year === CURRENT_ACADEMIC_YEAR) {
+                                        openCommentActionModal(currentStudentID, key, year, canEdit, notesContainer);
+                                    } else {
+                                        // Only allow add note for previous years if needed, but per requirements, no add note for previous years
+                                        // So do nothing or show a tooltip
+                                        alert("You cannot edit or add notes to comments from previous years.");
+                                    }
+                                };
+
+                                // Style for managers and non-admins (current year)
+                                if (year === CURRENT_ACADEMIC_YEAR && managers.includes(userEmail)) {
+                                    commentBox.title = "Managers can view all comments but cannot edit or delete.";
+                                    commentBox.style.opacity = "1";
+                                    commentBox.style.cursor = "pointer";
+                                } else if (year === CURRENT_ACADEMIC_YEAR && !admins.includes(userEmail)) {
+                                    commentBox.title = "Only admins can edit or delete comments.";
+                                    commentBox.style.opacity = "0.7";
+                                    commentBox.style.cursor = "pointer";
+                                } else if (year !== CURRENT_ACADEMIC_YEAR) {
+                                    commentBox.title = "Editing or adding notes to comments from previous years is not allowed.";
                                     commentBox.style.opacity = "0.7";
                                     commentBox.style.cursor = "not-allowed";
                                 }
@@ -687,6 +730,128 @@ function displayStudentData(currentStudentID) {
             document.getElementById("loadingOverlay").style.display = "none";
         });
 }
+
+// --- Add: Modal for choosing Edit or Add Note ---
+function openCommentActionModal(studentID, commentKey, year, canEdit, notesContainer) {
+    // Create modal if not exists
+    let modal = document.getElementById("commentActionModal");
+    if (!modal) {
+        modal = document.createElement("div");
+        modal.id = "commentActionModal";
+        modal.className = "modal";
+        modal.innerHTML = `
+            <div class="modal-content" style="max-width:400px;">
+                <div class="modal-header">
+                    <h2>Comment Action</h2>
+                    <span id="closeCommentActionModal" class="close-modal" style="cursor:pointer;font-size:20px">&times;</span>
+                </div>
+                <div class="modal-body" id="commentActionModalBody"></div>
+            </div>
+        `;
+        document.body.appendChild(modal);
+        document.getElementById("closeCommentActionModal").onclick = closeModals;
+    }
+
+    // Set modal body
+    const body = modal.querySelector("#commentActionModalBody");
+    body.innerHTML = "";
+    if (canEdit) {
+        // Show both options
+        const editBtn = document.createElement("button");
+        editBtn.textContent = "Edit Comment";
+        editBtn.onclick = function () {
+            closeModals();
+            openEditModal(studentID, commentKey, year);
+        };
+        const noteBtn = document.createElement("button");
+        noteBtn.textContent = "Add Note";
+        noteBtn.onclick = function () {
+            closeModals();
+            addNoteToComment(studentID, year, commentKey, notesContainer);
+        };
+        body.appendChild(editBtn);
+        body.appendChild(noteBtn);
+    } else {
+        // Only add note
+        const noteBtn = document.createElement("button");
+        noteBtn.textContent = "Add Note";
+        noteBtn.onclick = function () {
+            closeModals();
+            addNoteToComment(studentID, year, commentKey, notesContainer);
+        };
+        body.appendChild(noteBtn);
+    }
+    modal.style.display = "block";
+}
+
+// function closeCommentActionModal() {
+//     const modal = document.getElementById("commentActionModal");
+//     if (modal) modal.style.display = "none";
+// }
+// --- End Modal ---
+
+// --- Add: Notes Section ---
+function loadNotesForComment(studentID, year, commentKey, notesContainer) {
+    const notesRef = ref(database, `Students/${studentID}/comments/${year}/${commentKey}/notes`);
+    get(notesRef)
+        .then((snapshot) => {
+            // Remove previous notes-list content if any
+            notesContainer.innerHTML = "";
+            if (snapshot.exists()) {
+                const notes = snapshot.val();
+                const noteKeys = Object.keys(notes);
+                if (noteKeys.length > 0) {
+                    let notesHtml = `<strong>Notes:</strong><div class="notes-list">`;
+                    noteKeys
+                        .sort((a, b) => {
+                            const tA = notes[a].timestamp || "";
+                            const tB = notes[b].timestamp || "";
+                            return tA > tB ? 1 : -1;
+                        })
+                        .forEach((noteKey) => {
+                            const note = notes[noteKey];
+                            notesHtml += `<div class="note-item" style="margin-bottom:4px;">
+                                <span style="font-size:13px;color:#555;"><b>${note.by || "Unknown"}:</b> ${note.text}</span>
+                                <span style="font-size:11px;color:#999;margin-left:8px;">${note.timestamp ? new Date(note.timestamp).toLocaleString() : ""}</span>
+                            </div>`;
+                        });
+                    notesHtml += `</div>`;
+                    notesContainer.innerHTML = notesHtml;
+                }
+                // If no notes, leave notesContainer empty (no "Notes:" label)
+            }
+            // If no notes, leave notesContainer empty (no "Notes:" label)
+        })
+        .catch((error) => {
+            notesContainer.innerHTML = "<span style='color:red;'>Failed to load notes.</span>";
+        });
+}
+
+// Add a note to a comment
+function addNoteToComment(studentID, year, commentKey, notesContainer) {
+    const noteText = prompt("Enter your note:");
+    if (!noteText || !noteText.trim()) return;
+
+    const user = auth.currentUser;
+    const userEmail = user ? user.email : "Unknown";
+    const noteObj = {
+        text: noteText.trim(),
+        by: userEmail,
+        timestamp: Date.now(),
+    };
+
+    const notesRef = ref(database, `Students/${studentID}/comments/${year}/${commentKey}/notes`);
+    const newNoteRef = push(notesRef);
+    set(newNoteRef, noteObj)
+        .then(() => {
+            loadNotesForComment(studentID, year, commentKey, notesContainer);
+        })
+        .catch((error) => {
+            alert("Failed to add note: " + error.message);
+        });
+}
+
+// --- End Notes Functions ---
 
 window.displayAllStudentData = function displayAllStudentData() {
     closeAllDiv();
