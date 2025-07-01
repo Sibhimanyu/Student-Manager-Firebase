@@ -5,9 +5,7 @@ import {
     ref,
     get,
     set,
-    push,
-    onValue,
-    remove
+    push
 } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-database.js";
 import {
     getAuth,
@@ -55,7 +53,7 @@ const managers = []; // Add managers array
 const CURRENT_ACADEMIC_YEAR = "2025-26";
 
 // Toggle this variable to enable/disable maintenance mode
-const MAINTENANCE_MODE = true; // Set to true to enable maintenance overlay
+const MAINTENANCE_MODE = false; // Set to true to enable maintenance overlay
 
 // Initialize Firebase Authentication
 const provider = new GoogleAuthProvider();
@@ -251,6 +249,138 @@ onAuthStateChanged(auth, async (user) => {
     }
 });
 
+// Add/Edit: Modal for editing student details
+function showEditStudentModal(studentId, studentDetails) {
+    // Create modal if not exists
+    let modal = document.getElementById("editStudentModal");
+    if (!modal) {
+        modal = document.createElement("div");
+        modal.id = "editStudentModal";
+        modal.className = "modal";
+        modal.innerHTML = `
+            <div class="modal-content" style="max-width:500px;">
+                <div class="modal-header">
+                    <h2>Edit Student</h2>
+                    <span id="closeEditStudentModal" class="close-modal" style="cursor:pointer;font-size:20px">&times;</span>
+                </div>
+                <form id="editStudentForm">
+                    <label>First Name: <input type="text" id="edit_first_name" required></label><br>
+                    <label>Middle Name: <input type="text" id="edit_middle_name"></label><br>
+                    <label>Last Name: <input type="text" id="edit_last_name"></label><br>
+                    <label>Blood Group: <input type="text" id="edit_blood_group"></label><br>
+                    <label>Class: <input type="text" id="edit_class"></label><br>
+                    <label>Section: <input type="text" id="edit_section"></label><br>
+                    <label>Date of Birth: <input type="date" id="edit_date_of_birth"></label><br>
+                    <label>Gender:
+                        <select id="edit_gender">
+                            <option value="">-</option>
+                            <option value="Male">Male</option>
+                            <option value="Female">Female</option>
+                        </select>
+                    </label><br>
+                    <label>Class Teacher: <input type="text" id="edit_class_teacher"></label><br>
+                    <label>Hostel Status:
+                        <select id="edit_hostel">
+                            <option value="">-</option>
+                            <option value="YES">YES</option>
+                            <option value="NO">NO</option>
+                        </select>
+                    </label><br>
+                    <label>Mobile Number: <input type="text" id="edit_mobile"></label><br>
+                    <label>Transport Status:
+                        <select id="edit_transport_status">
+                            <option value="">-</option>
+                            <option value="School Transport">School Transport</option>
+                            <option value="Self">Self</option>
+                        </select>
+                    </label><br>
+                    <div class="modal-footer">
+                        <button type="submit" class="save-button">Save</button>
+                        <button type="button" class="cancel-button" id="cancelEditStudentBtn">Cancel</button>
+                    </div>
+                </form>
+            </div>
+        `;
+        document.body.appendChild(modal);
+        document.getElementById("closeEditStudentModal").onclick = () => { modal.style.display = "none"; };
+        document.getElementById("cancelEditStudentBtn").onclick = () => { modal.style.display = "none"; };
+    }
+
+    // Fill form fields (display as-is, no uppercase)
+    document.getElementById("edit_first_name").value = studentDetails.first_name || "";
+    document.getElementById("edit_middle_name").value = studentDetails.middle_name || "";
+    document.getElementById("edit_last_name").value = studentDetails.last_name || "";
+    document.getElementById("edit_blood_group").value = studentDetails.blood_group || "";
+    document.getElementById("edit_class").value = studentDetails.class || "";
+    document.getElementById("edit_section").value = studentDetails.section || "";
+    // Convert DD/MM/YYYY to YYYY-MM-DD for input[type=date]
+    let dob = studentDetails.date_of_birth || "";
+    if (dob && dob.includes("/")) {
+        const [dd, mm, yyyy] = dob.split("/");
+        dob = `${yyyy}-${mm.padStart(2, "0")}-${dd.padStart(2, "0")}`;
+    }
+    document.getElementById("edit_date_of_birth").value = dob || "";
+    document.getElementById("edit_gender").value =
+        studentDetails.gender === "Male" || studentDetails.gender === "Female"
+            ? studentDetails.gender
+            : "";
+    document.getElementById("edit_class_teacher").value = studentDetails.class_teacher || "";
+    // Set hostel status select value (handles null/"-" as "")
+    document.getElementById("edit_hostel").value =
+        studentDetails.hostel === "YES" || studentDetails.hostel === "NO"
+            ? studentDetails.hostel
+            : "";
+    document.getElementById("edit_mobile").value = studentDetails.mobile || "";
+    // Set transport status select value (handles null/"-" as "")
+    document.getElementById("edit_transport_status").value =
+        studentDetails.transport_status === "School Transport" || studentDetails.transport_status === "Self"
+            ? studentDetails.transport_status
+            : "";
+
+    // Submit handler
+    document.getElementById("editStudentForm").onsubmit = function (e) {
+        e.preventDefault();
+        // Gather updated data (store as uppercase)
+        const updated = {
+            first_name: document.getElementById("edit_first_name").value.trim().toUpperCase(),
+            middle_name: document.getElementById("edit_middle_name").value.trim().toUpperCase(),
+            last_name: document.getElementById("edit_last_name").value.trim().toUpperCase(),
+            blood_group: document.getElementById("edit_blood_group").value.trim().toUpperCase(),
+            class: document.getElementById("edit_class").value.trim().toUpperCase(),
+            section: document.getElementById("edit_section").value.trim().toUpperCase(),
+            date_of_birth: (() => {
+                const val = document.getElementById("edit_date_of_birth").value;
+                if (!val) return "";
+                // Convert YYYY-MM-DD to DD/MM/YYYY
+                const [yyyy, mm, dd] = val.split("-");
+                return `${dd}/${mm}/${yyyy}`;
+            })(),
+            gender: document.getElementById("edit_gender").value.trim().toUpperCase(),
+            class_teacher: document.getElementById("edit_class_teacher").value.trim().toUpperCase(),
+            hostel: document.getElementById("edit_hostel").value.trim().toUpperCase(),
+            mobile: document.getElementById("edit_mobile").value.trim(),
+            transport_status: document.getElementById("edit_transport_status").value.toUpperCase(),
+        };
+        // Save to Firebase
+        const studentRef = ref(getDatabase(), `Students/${studentId}/details`);
+        document.getElementById("loadingOverlay").style.display = "block";
+        set(studentRef, updated)
+            .then(() => {
+                modal.style.display = "none";
+                showNotificationOverlay("Student details updated!");
+                window.displayStudentTable(); // Refresh table
+            })
+            .catch((err) => {
+                alert("Failed to update student: " + err.message);
+            })
+            .finally(() => {
+                document.getElementById("loadingOverlay").style.display = "none";
+            });
+    };
+
+    modal.style.display = "block";
+}
+
 // Function to open the student management table
 window.displayStudentTable = function displayStudentTable() {
     document.getElementById("loadingOverlay").style.display = "block";
@@ -277,17 +407,15 @@ window.displayStudentTable = function displayStudentTable() {
                 <table class="student-table">
                     <thead>
                         <tr>
-                            <!-- <th>ID</th> -->
                             <th>First Name</th>
                             <th>Middle Name</th>
                             <th>Last Name</th>
                             <th>Blood Group</th>
                             <th>Class</th>
                             <th>Section</th>
-                            <!-- <th>Date of Admission</th> -->
                             <th>Date of Birth</th>
-                            <!-- <th>EMIS</th> -->
                             <th>Gender</th>
+                            <th>Class Teacher</th>
                             <th>Hostel Status</th>
                             <th>Mobile Number</th>
                             <th>Transport Status</th>
@@ -296,22 +424,20 @@ window.displayStudentTable = function displayStudentTable() {
                     <tbody>
             `;
 
-                // Populate table rows with student details
+                // Populate table rows with student details (display as-is)
                 for (const studentId in studentsData) {
                     const student = studentsData[studentId].details;
                     tableHTML += `
-                    <tr>
-                        <!-- <td>${studentId}</td> -->
+                    <tr class="student-row" data-student-id="${studentId}">
                         <td>${student.first_name || "-"}</td>
                         <td>${student.middle_name || "-"}</td>
                         <td>${student.last_name || "-"}</td>
                         <td>${student.blood_group || "-"}</td>
                         <td>${student.class || "-"}</td>
                         <td>${student.section || "-"}</td>
-                        <!-- <td>${student.date_of_admission || "-"}</td> -->
                         <td>${student.date_of_birth || "-"}</td>
-                        <!-- <td>${student.emis || "-"}</td> -->
                         <td>${student.gender || "-"}</td>
+                        <td>${student.class_teacher || "-"}</td>
                         <td>${student.hostel || "-"}</td>
                         <td>${student.mobile}</td>
                         <td>${student.transport_status || "-"}</td>
@@ -320,10 +446,17 @@ window.displayStudentTable = function displayStudentTable() {
                 }
 
                 tableHTML += `</tbody></table>`;
-                document.getElementById("loadingOverlay").style.display =
-                    "none";
-                document.getElementById("tableContainer").innerHTML +=
-                    tableHTML;
+                document.getElementById("loadingOverlay").style.display = "none";
+                document.getElementById("tableContainer").innerHTML = tableHTML;
+
+                // Add click listeners to each row
+                document.querySelectorAll(".student-row").forEach((row) => {
+                    row.addEventListener("click", function () {
+                        const sid = this.getAttribute("data-student-id");
+                        const sdetails = studentsData[sid].details;
+                        showEditStudentModal(sid, sdetails);
+                    });
+                });
             } else {
                 manageStudentsContainer.innerHTML =
                     "<p>No student data available.</p>";
@@ -535,6 +668,7 @@ function displayStudentSelectBox() {
                 // Loop through students and add them to the dropdown immediately
                 for (const studentId in data) {
                     const studentData = data[studentId];
+                    // Build student name as-is (no uppercase)
                     const studentName = `${
                         studentData.details?.first_name ?? ""
                     } ${studentData.details?.middle_name ?? ""} ${
@@ -542,14 +676,13 @@ function displayStudentSelectBox() {
                     }`
                         .replace(/\s+/g, " ")
                         .trim();
-                    // const studentName = studentData.details.name;
                     const date_of_birth = studentData.details.date_of_birth;
 
                     studentMap[studentName] = studentId;
 
                     const option = document.createElement("option");
-                    option.value = studentName; // Store the student name as value
-                    option.textContent = date_of_birth; // Display name and DOB
+                    option.value = studentName; // Store the student name as value (as-is)
+                    option.textContent = date_of_birth; // Display DOB
                     selectBox.appendChild(option);
                 }
 
@@ -584,9 +717,8 @@ function displayStudentSelectBox() {
 }
 
 function getStudentIdByName(studentName) {
-    if (studentMap[studentName]) {
-        return studentMap[studentName]; // Return the ID or null if not found
-    }
+    // Use as-is for lookup
+    return studentMap[studentName] || null;
 }
 
 // Modify displayStudentData function
@@ -688,7 +820,7 @@ function displayStudentData(currentStudentID) {
                                     } else {
                                         // Only allow add note for previous years if needed, but per requirements, no add note for previous years
                                         // So do nothing or show a tooltip
-                                        alert("You cannot edit or add notes to comments from previous years.");
+                                        alert("You cannot edit or delete comments from previous years.");
                                     }
                                 };
 
@@ -972,6 +1104,7 @@ window.displayAllStudentData = function displayAllStudentData() {
                             ) {
                                 Object.keys(yearComments).forEach((key) => {
                                     const comment = yearComments[key];
+                                    // Build student name as-is
                                     const studentName = `${
                                         student.details?.first_name ?? ""
                                     } ${student.details?.middle_name ?? ""} ${
@@ -983,8 +1116,8 @@ window.displayAllStudentData = function displayAllStudentData() {
                                     allComments.push({
                                         studentID: studentID,
                                         name: studentName,
-                                        class: student.details.class,
-                                        section: student.details.section,
+                                        class: student.details.class || "",
+                                        section: student.details.section || "",
                                         date: comment.date,
                                         time: comment.time,
                                         from: comment.from,
@@ -1412,59 +1545,4 @@ window.addEventListener("DOMContentLoaded", () => {
     });
     document.getElementById("studentDirectory").style.display = "block"; // Show the modal
 
-    // Initialize Firebase (Assumes Firebase is already initialized in your project)
-    // const adminEmailsRef = ref(database, "AdminEmails");
-    // const dbRef = ref(database, "Students");
-
-    // Function to add a new admin email
-    // document.getElementById("add-admin-btn").addEventListener("click", () => {
-    //     const email = document.getElementById("admin-email").value.trim();
-    //     if (email.endsWith("@aurobindovidhyalaya.edu.in")) {
-    //         push(adminEmailsRef, email)
-    //             .then(() => {
-    //                 document.getElementById("admin-email").value = ""; // Clear input after adding
-    //             })
-    //             .catch((error) => {
-    //                 console.error("Error adding email:", error);
-    //             });
-    //     } else {
-    //         alert(
-    //             "Please enter a valid email ending with @aurobindovidhyalaya.edu.in"
-    //         );
-    //     }
-    // });
-
-    // Function to remove an admin email
-    // function removeAdminEmail(key) {
-    //     const emailRef = ref(database, `AdminEmails/${key}`);
-    //     remove(emailRef).catch((error) => {
-    //         console.error("Error removing email:", error);
-    //     });
-    // }
-
-    // Real-time listener to populate the admin email list
-    // onValue(adminEmailsRef, (snapshot) => {
-    //     const adminEmailList = document.getElementById("admin-email-list");
-    //     adminEmailList.innerHTML = ""; // Clear the list
-
-    //     snapshot.forEach((childSnapshot) => {
-    //         const key = childSnapshot.key;
-    //         const email = childSnapshot.val();
-
-    //         const listItem = document.createElement("li");
-    //         listItem.classList.add("admin-list-item");
-
-    //         const emailText = document.createElement("span");
-    //         emailText.textContent = email;
-    //         listItem.appendChild(emailText);
-
-    //         const removeBtn = document.createElement("button");
-    //         removeBtn.classList.add("remove-btn");
-    //         removeBtn.textContent = "Remove";
-    //         removeBtn.addEventListener("click", () => removeAdminEmail(key));
-
-    //         listItem.appendChild(removeBtn);
-    //         adminEmailList.appendChild(listItem);
-    //     });
-    // });
 });

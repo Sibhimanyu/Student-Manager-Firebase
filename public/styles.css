@@ -181,22 +181,25 @@ select:focus {
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
+
+    overflow-y: auto; /* Make modal content scrollable if needed */
 }
 
-/* Modal header and footer adjustments */
-.modal-header,
-.modal-footer {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-}
-
+/* Optional: Make modal header/footer sticky for better UX */
 .modal-header {
+    position: sticky;
+    top: 0;
+    background: #fff;
+    z-index: 2;
     border-bottom: 1px solid #ccc;
     padding-bottom: 10px;
     margin-bottom: 20px;
 }
 .modal-footer {
+    position: sticky;
+    bottom: 0;
+    background: #fff;
+    z-index: 2;
     border-top: 1px solid #ccc;
     padding-top: 10px;
     margin-top: 20px;
@@ -827,4 +830,12 @@ body {
     margin-left: 2px;
     margin-top: 1px;
     word-break: break-word;
+}
+
+.student-table tr.student-row {
+    cursor: pointer;
+    transition: background 0.2s;
+}
+.student-table tr.student-row:hover {
+    background: #ffe5cc;
 }
