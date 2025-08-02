@@ -1,19 +1,17 @@
 export function closeAllDiv() {
     document.getElementById("studentDirectory").style.display = "none";
     document.getElementById("manageStudents").style.display = "none";
-    document.getElementById("adminSettings").style.display = "none";
     document.getElementById("allComments").style.display = "none";
     document.getElementById("statistics").style.display = "none";
     document.getElementById("signedOut").style.display = "none";
-    document.getElementById("settings").style.display = "none";
 }
 
 // Function to close the edit modal
 export function closeModals() {
-    try {
+    try{
         document.getElementById("commentActionModal").style.display = "none";
     } catch (error) {
-        console.error("action model not open");
+        console.error("Error closing modals:", error);
     }
     document.getElementById("editModal").style.display = "none";
     document.getElementById("userModal").style.display = "none";

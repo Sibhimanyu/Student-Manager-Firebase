@@ -839,3 +839,129 @@ body {
 .student-table tr.student-row:hover {
     background: #ffe5cc;
 }
+
+/* --- Modal Improvements for Edit and Add Note --- */
+.modal-content form label {
+    display: block;
+    margin-bottom: 12px;
+    font-size: 15px;
+    color: #333;
+}
+
+.modal-content form input[type="text"],
+.modal-content form input[type="date"],
+.modal-content form select,
+.modal-content form textarea {
+    width: 100%;
+    box-sizing: border-box;
+    margin-top: 4px;
+    margin-bottom: 0;
+    padding: 9px 10px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    font-size: 15px;
+    background: #fafafa;
+}
+
+.modal-content form textarea {
+    min-height: 70px;
+    max-height: 200px;
+    resize: vertical;
+}
+
+.modal-content form .modal-footer {
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px solid #eee;
+    background: none;
+    position: static;
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+}
+
+.modal-content .modal-header {
+    margin-bottom: 18px;
+}
+
+.modal-content .close-modal {
+    float: right;
+    margin-left: 10px;
+}
+
+#editStudentModal .modal-content,
+#addNoteModal .modal-content,
+#editModal .modal-content {
+    max-width: 420px;
+    width: 95%;
+    min-width: 280px;
+    padding: 24px 24px 18px 24px;
+    border-radius: 12px;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.13);
+}
+
+#editStudentModal .modal-header,
+#addNoteModal .modal-header,
+#editModal .modal-header {
+    border-bottom: 1px solid #eee;
+    margin-bottom: 18px;
+    padding-bottom: 8px;
+}
+
+#editStudentModal .modal-footer,
+#addNoteModal .modal-footer,
+#editModal .modal-footer {
+    border-top: 1px solid #eee;
+    margin-top: 18px;
+    padding-top: 8px;
+    background: none;
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+}
+
+#editStudentModal input[type="text"],
+#editStudentModal input[type="date"],
+#editStudentModal select,
+#addNoteModal input[type="date"],
+#addNoteModal textarea,
+#editModal textarea {
+    width: 100%;
+    margin-bottom: 0;
+    margin-top: 4px;
+}
+
+#addNoteModal label,
+#editStudentModal label {
+    margin-bottom: 10px;
+    display: block;
+}
+
+#addNoteModal textarea,
+#editModal textarea {
+    min-height: 80px;
+    max-height: 200px;
+    resize: vertical;
+    font-size: 15px;
+    padding: 10px;
+}
+
+#addNoteModal input[type="date"] {
+    font-size: 15px;
+    padding: 8px 10px;
+}
+
+#addNoteModal .modal-footer button,
+#editStudentModal .modal-footer button,
+#editModal .modal-footer button {
+    min-width: 90px;
+    padding: 8px 0;
+    font-size: 15px;
+}
+
+#addNoteModal .modal-header h2,
+#editStudentModal .modal-header h2,
+#editModal .modal-header h2 {
+    font-size: 21px;
+    margin: 0;
+}
