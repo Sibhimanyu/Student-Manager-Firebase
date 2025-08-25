@@ -674,12 +674,13 @@ function displayStudentSelectBox() {
                         .replace(/\s+/g, " ")
                         .trim();
                     const date_of_birth = studentData.details.date_of_birth;
-
+                    const grade_section = studentData.details.class + "-" + studentData.details.section;
+                    
                     studentMap[studentName] = studentId;
 
                     const option = document.createElement("option");
                     option.value = studentName; // Store the student name as value (as-is)
-                    option.textContent = date_of_birth; // Display DOB
+                    option.textContent = grade_section + "\n (" + date_of_birth + ")"; // Display DOB and Grade/Section
                     selectBox.appendChild(option);
                 }
 
@@ -1287,13 +1288,13 @@ function submitNewComment() {
 
             // Send notification to Google Chat
             sendGoogleChatNotification(newComment, "New Comment Added");
+            showNotificationOverlay("Comment Added Successfully");
         })
         .catch((error) => {
             console.error("Error adding comment:", error);
             alert("Failed to add comment. Please try again.");
         });
     document.getElementById("loadingOverlay").style.display = "none";
-    showNotificationOverlay("Comment Added Successfully");
 }
 
 // Function to send a notification to Google Chat
