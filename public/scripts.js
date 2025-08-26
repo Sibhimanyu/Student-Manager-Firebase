@@ -106,12 +106,10 @@ function signIn() {
                 console.log("User signed in:", user);
                 document.getElementById("signedOut").style.display = "none";
                 document.getElementById("menu_btn").disabled = false;
-                document.getElementById("studentDirectory").style.display =
-                    "block";
+                document.getElementById("studentDirectory").style.display = "block";
             } else {
                 // Sign out the user and display an error message
-                document.getElementById("studentDirectory").style.display =
-                    "none";
+                document.getElementById("studentDirectory").style.display = "none";
                 document.getElementById("modalUserEmail").textContent = "";
                 document.getElementById("modalUserName").textContent = "";
                 document.getElementById("modalProviderId").textContent = "";
@@ -238,7 +236,13 @@ onAuthStateChanged(auth, async (user) => {
         // ) {
         //     document.getElementById("menu_settings").style.display = "block";
         // }
-    } else {
+    } else if (managers.includes(userEmail)) {
+        document.getElementById("menu_manage_students").style.display = "block";
+        document.getElementById("menu_statistics").style.display = "none";
+        document.getElementById("menu_all_comments").style.display = "none";
+        
+    }
+    else {
         document.getElementById("menu_manage_students").style.display = "none";
         document.getElementById("menu_all_comments").style.display = "none";
         document.getElementById("menu_statistics").style.display = "none";
@@ -246,7 +250,9 @@ onAuthStateChanged(auth, async (user) => {
     }
 });
 
-// Add/Edit: Modal for editing student details
+// ============================
+// EDIT STUDENT MODAL
+// ============================
 function showEditStudentModal(studentId, studentDetails) {
     // Create modal if not exists
     let modal = document.getElementById("editStudentModal");
@@ -255,42 +261,44 @@ function showEditStudentModal(studentId, studentDetails) {
         modal.id = "editStudentModal";
         modal.className = "modal";
         modal.innerHTML = `
-            <div class="modal-content" style="max-width:500px;">
+            <div class="modal-content">
                 <div class="modal-header">
                     <h2>Edit Student</h2>
                     <span id="closeEditStudentModal" class="close-modal" style="cursor:pointer;font-size:20px">&times;</span>
                 </div>
                 <form id="editStudentForm">
-                    <label>First Name: <input type="text" id="edit_first_name" required></label><br>
-                    <label>Middle Name: <input type="text" id="edit_middle_name"></label><br>
-                    <label>Last Name: <input type="text" id="edit_last_name"></label><br>
-                    <label>Blood Group: <input type="text" id="edit_blood_group"></label><br>
-                    <label>Class: <input type="text" id="edit_class"></label><br>
-                    <label>Section: <input type="text" id="edit_section"></label><br>
-                    <label>Date of Birth: <input type="date" id="edit_date_of_birth"></label><br>
-                    <label>Gender:
-                        <select id="edit_gender">
-                            <option value="">-</option>
-                            <option value="Male">Male</option>
-                            <option value="Female">Female</option>
-                        </select>
-                    </label><br>
-                    <label>Class Teacher: <input type="text" id="edit_class_teacher"></label><br>
-                    <label>Hostel Status:
-                        <select id="edit_hostel">
-                            <option value="">-</option>
-                            <option value="YES">YES</option>
-                            <option value="NO">NO</option>
-                        </select>
-                    </label><br>
-                    <label>Mobile Number: <input type="text" id="edit_mobile"></label><br>
-                    <label>Transport Status:
-                        <select id="edit_transport_status">
-                            <option value="">-</option>
-                            <option value="School Transport">School Transport</option>
-                            <option value="Self">Self</option>
-                        </select>
-                    </label><br>
+                    <div class="modal-body">
+                        <div class="form-row"><label for="edit_first_name">First Name:</label><input type="text" id="edit_first_name" required></div>
+                        <div class="form-row"><label for="edit_middle_name">Middle Name:</label><input type="text" id="edit_middle_name"></div>
+                        <div class="form-row"><label for="edit_last_name">Last Name:</label><input type="text" id="edit_last_name" required></div>
+                        <div class="form-row"><label for="edit_blood_group">Blood Group:</label><input type="text" id="edit_blood_group"></div>
+                        <div class="form-row"><label for="edit_class">Class:</label><input type="text" id="edit_class" required></div>
+                        <div class="form-row"><label for="edit_section">Section:</label><input type="text" id="edit_section" required></div>
+                        <div class="form-row"><label for="edit_date_of_birth">Date of Birth:</label><input type="date" id="edit_date_of_birth" required></div>
+                        <div class="form-row"><label for="edit_gender" required >Gender:</label>
+                            <select id="edit_gender">
+                                <option value="">-</option>
+                                <option>MALE</option>
+                                <option>FEMALE</option>
+                            </select>
+                        </div>
+                        <div class="form-row"><label for="edit_class_teacher">Class Teacher:</label><input type="text" id="edit_class_teacher"></div>
+                        <div class="form-row"><label for="edit_hostel">Hostel Status:</label>
+                            <select id="edit_hostel">
+                                <option value="">-</option>
+                                <option>YES</option>
+                                <option>NO</option>
+                            </select>
+                        </div>
+                        <div class="form-row"><label for="edit_mobile">Mobile Number:</label><input type="text" id="edit_mobile"></div>
+                        <div class="form-row"><label for="edit_transport_status">Transport Status:</label>
+                            <select id="edit_transport_status">
+                                <option value="">-</option>
+                                <option>SCHOOL TRANSPORT</option>
+                                <option>SELF</option>
+                            </select>
+                        </div>
+                    </div>
                     <div class="modal-footer">
                         <button type="submit" class="save-button">Save</button>
                         <button type="button" class="cancel-button" id="cancelEditStudentBtn">Cancel</button>
@@ -303,41 +311,32 @@ function showEditStudentModal(studentId, studentDetails) {
         document.getElementById("cancelEditStudentBtn").onclick = () => { modal.style.display = "none"; };
     }
 
-    // Fill form fields (display as-is, no uppercase)
-    document.getElementById("edit_first_name").value = studentDetails.first_name || "";
-    document.getElementById("edit_middle_name").value = studentDetails.middle_name || "";
-    document.getElementById("edit_last_name").value = studentDetails.last_name || "";
-    document.getElementById("edit_blood_group").value = studentDetails.blood_group || "";
-    document.getElementById("edit_class").value = studentDetails.class || "";
-    document.getElementById("edit_section").value = studentDetails.section || "";
-    // Convert DD/MM/YYYY to YYYY-MM-DD for input[type=date]
+    // Fill form fields
+    // Fill form fields (safe uppercase)
+    document.getElementById("edit_first_name").value = (studentDetails.first_name || "").toUpperCase();
+    document.getElementById("edit_middle_name").value = (studentDetails.middle_name || "").toUpperCase();
+    document.getElementById("edit_last_name").value = (studentDetails.last_name || "").toUpperCase();
+    document.getElementById("edit_blood_group").value = (studentDetails.blood_group || "").toUpperCase();
+    document.getElementById("edit_class").value = (studentDetails.class || "").toUpperCase();
+    document.getElementById("edit_section").value = (studentDetails.section || "").toUpperCase();
+
     let dob = studentDetails.date_of_birth || "";
     if (dob && dob.includes("/")) {
         const [dd, mm, yyyy] = dob.split("/");
         dob = `${yyyy}-${mm.padStart(2, "0")}-${dd.padStart(2, "0")}`;
     }
     document.getElementById("edit_date_of_birth").value = dob || "";
-    document.getElementById("edit_gender").value =
-        studentDetails.gender === "Male" || studentDetails.gender === "Female"
-            ? studentDetails.gender
-            : "";
-    document.getElementById("edit_class_teacher").value = studentDetails.class_teacher || "";
-    // Set hostel status select value (handles null/"-" as "")
-    document.getElementById("edit_hostel").value =
-        studentDetails.hostel === "YES" || studentDetails.hostel === "NO"
-            ? studentDetails.hostel
-            : "";
+
+    document.getElementById("edit_gender").value = (studentDetails.gender || "").toUpperCase();
+    document.getElementById("edit_class_teacher").value = (studentDetails.class_teacher || "").toUpperCase();
+    document.getElementById("edit_hostel").value = (studentDetails.hostel || "").toUpperCase();
     document.getElementById("edit_mobile").value = studentDetails.mobile || "";
-    // Set transport status select value (handles null/"-" as "")
-    document.getElementById("edit_transport_status").value =
-        studentDetails.transport_status === "School Transport" || studentDetails.transport_status === "Self"
-            ? studentDetails.transport_status
-            : "";
+    document.getElementById("edit_transport_status").value = (studentDetails.transport_status || "").toUpperCase();
+
 
     // Submit handler
     document.getElementById("editStudentForm").onsubmit = function (e) {
         e.preventDefault();
-        // Gather updated data (store as uppercase)
         const updated = {
             first_name: document.getElementById("edit_first_name").value.trim().toUpperCase(),
             middle_name: document.getElementById("edit_middle_name").value.trim().toUpperCase(),
@@ -348,7 +347,6 @@ function showEditStudentModal(studentId, studentDetails) {
             date_of_birth: (() => {
                 const val = document.getElementById("edit_date_of_birth").value;
                 if (!val) return "";
-                // Convert YYYY-MM-DD to DD/MM/YYYY
                 const [yyyy, mm, dd] = val.split("-");
                 return `${dd}/${mm}/${yyyy}`;
             })(),
@@ -358,18 +356,15 @@ function showEditStudentModal(studentId, studentDetails) {
             mobile: document.getElementById("edit_mobile").value.trim(),
             transport_status: document.getElementById("edit_transport_status").value.toUpperCase(),
         };
-        // Save to Firebase
         const studentRef = ref(getDatabase(), `Students/${studentId}/details`);
         document.getElementById("loadingOverlay").style.display = "block";
         set(studentRef, updated)
             .then(() => {
                 modal.style.display = "none";
                 showNotificationOverlay("Student details updated!");
-                window.displayStudentTable(); // Refresh table
+                window.displayStudentTable();
             })
-            .catch((err) => {
-                alert("Failed to update student: " + err.message);
-            })
+            .catch((err) => alert("Failed to update student: " + err.message))
             .finally(() => {
                 document.getElementById("loadingOverlay").style.display = "none";
             });
@@ -377,6 +372,132 @@ function showEditStudentModal(studentId, studentDetails) {
 
     modal.style.display = "block";
 }
+
+// ============================
+// ADD STUDENT MODAL
+// ============================
+function showAddStudentModal() {
+    let modal = document.getElementById("addStudentModal");
+    if (!modal) {
+        modal = document.createElement("div");
+        modal.id = "addStudentModal";
+        modal.className = "modal";
+        modal.innerHTML = `
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2>Add New Student</h2>
+                    <span id="closeAddStudentModal" class="close-modal" style="cursor:pointer;font-size:20px">&times;</span>
+                </div>
+                <form id="addStudentForm">
+                    <div class="modal-body">
+                        <div class="form-row"><label for="add_first_name">First Name:</label><input type="text" id="add_first_name" required></div>
+                        <div class="form-row"><label for="add_middle_name">Middle Name:</label><input type="text" id="add_middle_name"></div>
+                        <div class="form-row"><label for="add_last_name">Last Name:</label><input type="text" id="add_last_name" required></div>
+                        <div class="form-row"><label for="add_blood_group">Blood Group:</label><input type="text" id="add_blood_group"></div>
+                        <div class="form-row"><label for="add_class">Class:</label><input type="text" id="add_class" required></div>
+                        <div class="form-row"><label for="add_section">Section:</label><input type="text" id="add_section" required></div>
+                        <div class="form-row"><label for="add_date_of_birth">Date of Birth:</label><input type="date" id="add_date_of_birth" required></div>
+                        <div class="form-row"><label for="add_gender">Gender:</label>
+                            <select id="add_gender" required>
+                                <option value="">Select Gender</option>
+                                <option>MALE</option>
+                                <option>FEMALE</option>
+                            </select>
+                        </div>
+                        <div class="form-row"><label for="add_class_teacher">Class Teacher:</label><input type="text" id="add_class_teacher"></div>
+                        <div class="form-row"><label for="add_hostel">Hostel Status:</label>
+                            <select id="add_hostel">
+                                <option value="">-</option>
+                                <option>YES</option>
+                                <option>NO</option>
+                            </select>
+                        </div>
+                        <div class="form-row"><label for="add_mobile">Mobile Number:</label><input type="text" id="add_mobile"></div>
+                        <div class="form-row"><label for="add_transport_status">Transport Status:</label>
+                            <select id="add_transport_status">
+                                <option value="">-</option>
+                                <option>SCHOOL TRANSPORT</option>
+                                <option>SELF</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="submit" class="save-button">Add Student</button>
+                        <button type="button" class="cancel-button" id="cancelAddStudentBtn">Cancel</button>
+                    </div>
+                </form>
+            </div>
+        `;
+        document.body.appendChild(modal);
+        document.getElementById("closeAddStudentModal").onclick = () => { modal.style.display = "none"; };
+        document.getElementById("cancelAddStudentBtn").onclick = () => { modal.style.display = "none"; };
+    }
+
+    // Reset form
+    document.getElementById("addStudentForm").reset();
+
+    // Submit handler
+    document.getElementById("addStudentForm").onsubmit = function (e) {
+        e.preventDefault();
+        const firstName = document.getElementById("add_first_name").value.trim();
+        const lastName = document.getElementById("add_last_name").value.trim();
+        const studentClass = document.getElementById("add_class").value.trim();
+        const section = document.getElementById("add_section").value.trim();
+        const dateOfBirth = document.getElementById("add_date_of_birth").value;
+        const gender = document.getElementById("add_gender").value;
+
+        if (!firstName || !lastName || !studentClass || !section || !dateOfBirth || !gender) {
+            alert("Please fill in all required fields.");
+            return;
+        }
+
+        const fullName = `${firstName.toUpperCase()} ${document.getElementById("add_middle_name").value.trim().toUpperCase()} ${lastName.toUpperCase()}`.replace(/\s+/g, " ").trim();
+        if (studentMap[fullName]) {
+            alert("A student with this name already exists.");
+            return;
+        }
+
+        const newStudent = {
+            details: {
+                first_name: firstName.toUpperCase(),
+                middle_name: document.getElementById("add_middle_name").value.trim().toUpperCase(),
+                last_name: lastName.toUpperCase(),
+                blood_group: document.getElementById("add_blood_group").value.trim().toUpperCase(),
+                class: studentClass.toUpperCase(),
+                section: section.toUpperCase(),
+                date_of_birth: (() => {
+                    const [yyyy, mm, dd] = dateOfBirth.split("-");
+                    return `${dd}/${mm}/${yyyy}`;
+                })(),
+                gender: gender.toUpperCase(),
+                class_teacher: document.getElementById("add_class_teacher").value.trim().toUpperCase(),
+                hostel: document.getElementById("add_hostel").value.trim().toUpperCase(),
+                mobile: document.getElementById("add_mobile").value.trim(),
+                transport_status: document.getElementById("add_transport_status").value.toUpperCase(),
+            }
+        };
+
+        const studentsRef = ref(getDatabase(), "Students");
+        document.getElementById("loadingOverlay").style.display = "block";
+        const newStudentRef = push(studentsRef);
+
+        set(newStudentRef, newStudent)
+            .then(() => {
+                modal.style.display = "none";
+                showNotificationOverlay("Student added successfully!");
+                window.displayStudentTable();
+                displayStudentSelectBox();
+                studentMap[fullName] = newStudentRef.key;
+            })
+            .catch((err) => alert("Failed to add student: " + err.message))
+            .finally(() => {
+                document.getElementById("loadingOverlay").style.display = "none";
+            });
+    };
+
+    modal.style.display = "block";
+}
+
 
 // Function to open the student management table
 window.displayStudentTable = function displayStudentTable() {
@@ -398,6 +519,33 @@ window.displayStudentTable = function displayStudentTable() {
         .then((snapshot) => {
             if (snapshot.exists()) {
                 const studentsData = snapshot.val();
+
+                // Create Add Student button and insert it before the search container
+                const searchContainer = document.querySelector(".search-container");
+                let addStudentBtn = document.getElementById("addStudentBtn");
+                
+                if (!addStudentBtn) {
+                    addStudentBtn = document.createElement("button");
+                    addStudentBtn.id = "addStudentBtn";
+                    addStudentBtn.textContent = "Add New Student";
+                    addStudentBtn.style.color = "white";
+                    addStudentBtn.style.border = "none";
+                    addStudentBtn.style.padding = "10px 20px";
+                    addStudentBtn.style.borderRadius = "5px";
+                    addStudentBtn.style.cursor = "pointer";
+                    addStudentBtn.style.fontSize = "16px";
+                    addStudentBtn.style.marginBottom = "15px";
+                    addStudentBtn.style.width = "auto";
+                    addStudentBtn.style.display = "inline-block";
+                    
+                    addStudentBtn.addEventListener("click", function() {
+                        showAddStudentModal();
+                    });
+                
+                    
+                    // Insert before the search container
+                    searchContainer.parentNode.insertBefore(addStudentBtn, searchContainer);
+                }
 
                 // Build the HTML table
                 let tableHTML = `
@@ -436,7 +584,7 @@ window.displayStudentTable = function displayStudentTable() {
                         <td>${student.gender || "-"}</td>
                         <td>${student.class_teacher || "-"}</td>
                         <td>${student.hostel || "-"}</td>
-                        <td>${student.mobile}</td>
+                        <td>${student.mobile || "-"}</td>
                         <td>${student.transport_status || "-"}</td>
                     </tr>
                 `;
@@ -446,7 +594,7 @@ window.displayStudentTable = function displayStudentTable() {
                 document.getElementById("loadingOverlay").style.display = "none";
                 document.getElementById("tableContainer").innerHTML = tableHTML;
 
-                // Add click listeners to each row
+                // Add click listeners to each row for editing
                 document.querySelectorAll(".student-row").forEach((row) => {
                     row.addEventListener("click", function () {
                         const sid = this.getAttribute("data-student-id");
@@ -455,14 +603,41 @@ window.displayStudentTable = function displayStudentTable() {
                     });
                 });
             } else {
-                manageStudentsContainer.innerHTML =
-                    "<p>No student data available.</p>";
+                // Create Add Student button even when no students exist
+                const searchContainer = document.querySelector(".search-container");
+                let addStudentBtn = document.getElementById("addStudentBtn");
+                
+                if (!addStudentBtn) {
+                    addStudentBtn = document.createElement("button");
+                    addStudentBtn.id = "addStudentBtn";
+                    addStudentBtn.textContent = "Add New Student";
+                    addStudentBtn.style.color = "white";
+                    addStudentBtn.style.border = "none";
+                    addStudentBtn.style.padding = "10px 20px";
+                    addStudentBtn.style.borderRadius = "5px";
+                    addStudentBtn.style.cursor = "pointer";
+                    addStudentBtn.style.fontSize = "16px";
+                    addStudentBtn.style.marginBottom = "15px";
+                    addStudentBtn.style.width = "auto";
+                    addStudentBtn.style.display = "inline-block";
+                    
+                    addStudentBtn.addEventListener("click", function() {
+                        showAddStudentModal();
+                    });
+                    
+                    // Insert before the search container
+                    searchContainer.parentNode.insertBefore(addStudentBtn, searchContainer);
+                }
+                
+                document.getElementById("tableContainer").innerHTML = "<p>No student data available. Click 'Add New Student' to get started.</p>";
             }
         })
         .catch((error) => {
             console.error("Error fetching student data:", error);
-            manageStudentsContainer.innerHTML =
-                "<p>Failed to load student data. Please try again later.</p>";
+            document.getElementById("tableContainer").innerHTML = "<p>Failed to load student data. Please try again later.</p>";
+        })
+        .finally(() => {
+            document.getElementById("loadingOverlay").style.display = "none";
         });
 };
 
