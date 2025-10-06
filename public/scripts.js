@@ -21,19 +21,9 @@ import {
     showNotificationOverlay,
     renderLastWeekCommentsChart,
 } from "./modifyUI.js";
+import { firebaseConfig, GOOGLE_CHAT_WEBHOOK, GEMINI_API_KEY } from "./config.js";
 
 // Firebase configuration
-const firebaseConfig = {
-    apiKey: "AIzaSyAxBBfrZ2F0MHQYOin8y--zcar1yIczj7A",
-    authDomain: "student-manager-7e6d4.firebaseapp.com",
-    databaseURL: "https://student-manager-7e6d4-default-rtdb.firebaseio.com",
-    projectId: "student-manager-7e6d4",
-    storageBucket: "student-manager-7e6d4.appspot.com",
-    messagingSenderId: "370807936518",
-    appId: "1:370807936518:web:9d3c51b1d61cdfe44b9587",
-    measurementId: "G-K8KHXE95R8",
-};
-
 const app = initializeApp(firebaseConfig);
 // const analytics = getAnalytics(app);
 
@@ -753,7 +743,7 @@ function updateStatWithAnimation(elementId, value) {
 }
 
 async function generateContent(inputText) {
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=AIzaSyAlF4yESZkymzTwSkZYGh9EMpBR3kd2T58`;
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`;
 
     var payload = {
         contents: [
@@ -1474,8 +1464,7 @@ function submitNewComment() {
 
 // Function to send a notification to Google Chat
 function sendGoogleChatNotification(comment, messageReason) {
-    const webhookUrl =
-        "https://chat.googleapis.com/v1/spaces/AAAAWjG06ys/messages?key=AIzaSyDdI0hCZtE6vySjMm-WEfRq3CPzqKqqsHI&token=YdjN3n3U0TF18f9dw3MicEOi1jLkLh1p4fkIlBNcn4Q"; // Replace with your webhook URL
+    const webhookUrl = GOOGLE_CHAT_WEBHOOK;
     const message = {
         text: `${messageReason}\nBy: ${comment.from}\nDate: ${comment.date}\nComment: "${comment.comment}"`,
     };
